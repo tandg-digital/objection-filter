@@ -1,0 +1,15 @@
+{
+  "plugins": ["node"],
+  "extends": ["eslint:recommended", "plugin:node/recommended"],
+  "rules": {
+    "node/exports-style": ["error", "module.exports"],
+    "no-unused-vars": 0,
+    "node/no-unpublished-require": 0,
+    "no-undef": 1,
+    "no-console": 0
+  },
+  "env": {
+     "node": true,
+     "mocha": true
+  }
+}
