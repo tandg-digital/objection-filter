@@ -1,4 +1,4 @@
-# Filter Query Builder
+# objection-filter
 objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It was originally based on [objection-find](https://github.com/Vincit/objection-find), but has since moved in a different direction. It aims to fulfil some requirements that occur often during API development:
 
 ##### 1. Filtering on nested relations
