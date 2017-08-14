@@ -33,7 +33,7 @@ app.get('/Customers', function(req, res, next) {
 ```
 
 Available filter properties include:
-```json
+```js
 // GET /api/Customers
 {
   // Properties on eagerly loaded models to filter by, but still show all root models
