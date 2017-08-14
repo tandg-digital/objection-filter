@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/tandg-digital/objection-filter/badge.svg?branch=master&service=github)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
+
 # objection-filter
 objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It was originally based on [objection-find](https://github.com/Vincit/objection-find), but has since moved in a different direction. It aims to fulfil some requirements that occur often during API development:
 
@@ -18,7 +20,7 @@ The benefit of having filters is exposing them through an API. ORMs usually prov
 The filtering library can be applied onto every _findAll_ REST endpoint e.g. `GET /api/{Model}?filter={"limit": 1}`
 
 A typical express route handler with a filter applied:
-```
+```js
 const { buildFilter } = require('objection-filter');
 const { Customer } = require('./models');
 
@@ -31,7 +33,7 @@ app.get('/Customers', function(req, res, next) {
 ```
 
 Available filter properties include:
-```
+```json
 // GET /api/Customers
 {
   // Properties on eagerly loaded models to filter by, but still show all root models
@@ -55,7 +57,7 @@ Here are some example queries to perform common operations.
 
 #### Only show me customers where their country contains "Fr"
 For models _Customer_ belongsTo _City_ belongsTo _Country_
-```
+```json
 {
   "require": {
     "cities.countries.name": {
@@ -66,7 +68,7 @@ For models _Customer_ belongsTo _City_ belongsTo _Country_
 ```
 
 This will result in a dataset like the following
-```
+```json
 [
   {
     "id": 123,
@@ -80,7 +82,7 @@ The `require` attribute will not automatically include related models. This allo
 
 #### Show me customers with a last name "Smith" but only show me their orders which are complete
 For models _Customer_ hasMany _Order_
-```
+```json
 {
   "where": {
     "lastName": "Smith",
@@ -91,7 +93,7 @@ For models _Customer_ hasMany _Order_
 ```
 
 This will result in a dataset like the following
-```
+```json
 [
   {
     "id": 123,
@@ -122,7 +124,7 @@ There are a limited number of operations that can be used within the filter synt
 ##### Example
 
 An example of operator usage
-```
+```json
 {
   "where": {
     "property0": "Exactly Equals",
