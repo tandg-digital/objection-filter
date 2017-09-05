@@ -16,7 +16,6 @@
  * in the same scope, since there's a join
  */
 const _ = require('lodash');
-const Boom = require('boom');
 const {
   sliceRelation,
   applyOperations
