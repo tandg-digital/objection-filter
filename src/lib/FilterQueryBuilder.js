@@ -25,9 +25,9 @@ const {
 } = require('./ExpressionBuilder');
 
 module.exports = class FilterQueryBuilder {
-  constructor(Model) {
+  constructor(Model, trx) {
     this.Model = Model;
-    this._builder = Model.query();
+    this._builder = Model.query(trx);
   }
 
   build(params = {}) {
@@ -197,7 +197,7 @@ const selectFields = (fields = [], builder, relationName) => {
     eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder._modelClass.tableName}.${field}`));
   });
 };
-  
+
 
 /**
  * Select a limited set of fields. Use dot notation to limit eagerly loaded models.
