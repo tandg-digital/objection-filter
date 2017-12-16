@@ -18,16 +18,28 @@
 const _ = require('lodash');
 const {
   sliceRelation,
-  applyOperations
+  Operations
 } = require('./utils');
 const {
   createRelationExpression
 } = require('./ExpressionBuilder');
 
 module.exports = class FilterQueryBuilder {
-  constructor(Model, trx) {
+  /**
+   * @param {Model} Model
+   * @param {Transaction} trx
+   * @param {Object} options.operators Custom operator handlers
+   */
+  constructor(Model, trx, options = {}) {
     this.Model = Model;
     this._builder = Model.query(trx);
+
+    // Initialize custom operators
+    const { operators = {} } = options;
+    const { applyOperations } = Operations({ operators });
+
+    // Initialize instance specific utilities
+    this.utils = { applyOperations };
   }
 
   build(params = {}) {
@@ -41,8 +53,8 @@ module.exports = class FilterQueryBuilder {
 
     applyFields(fields, this._builder);
     applyEager(eager, this._builder);
-    applyWhere(params.where, this._builder);
-    applyRequire(params.require, this._builder);
+    applyWhere(params.where, this._builder, this.utils);
+    applyRequire(params.require, this._builder, this.utils);
     applyOrder(order, this._builder);
     applyLimit(limit, offset, this._builder);
 
@@ -71,8 +83,11 @@ module.exports.applyEager = applyEager;
  * This prevents joining tables multiple times, and optimizes number of joins
  * @param {Object} filter
  * @param {QueryBuilder} builder The root query builder
+ * @param {Function} applyOperations Handler for applying operations
  */
-const applyRequire = function(filter = {}, builder) {
+const applyRequire = function(filter = {}, builder, utils = {}) {
+  const { applyOperations } = utils;
+
   if (Object.keys(filter).length === 0) return builder;
   const Model = builder._modelClass;
   const idColumn = `${Model.tableName}.${Model.idColumn}`;
@@ -96,7 +111,7 @@ const applyRequire = function(filter = {}, builder) {
 
     // Without a relation, a "require" is equivalent to a "where" on the root model
     if (!relationName)
-      return applyWhere({[propertyName]: andExpression}, builder);
+      return applyWhere({[propertyName]: andExpression}, builder, utils);
 
     relatedPropertyCount++;
     applyOperations(fullyQualifiedProperty, andExpression, filterQuery);
@@ -126,8 +141,10 @@ module.exports.applyRequire = applyRequire;
  * but in reality, it should allow an AND of multiple operations
  * @param {Object} filter The filter object
  * @param {QueryBuilder} builder The root query builder
+ * @param {Function} applyOperations Handler for applying operations
  */
-const applyWhere = function(filter = {}, builder) {
+const applyWhere = function(filter = {}, builder, utils = {}) {
+  const  { applyOperations } = utils;
   const Model = builder._modelClass;
 
   _.forEach(filter, (andExpression, property) => {
