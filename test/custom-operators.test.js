@@ -79,6 +79,32 @@ describe('Custom Operators', function () {
           .catch(done);
       });
 
+      it('should work with lower() function', done => {
+        const raw = require('objection').raw;
+        const options = {
+          operators: {
+            $equalsLower: (property, operand, builder) =>
+              builder.whereRaw('LOWER(??) = ?', [
+                property,
+                operand.toLowerCase()
+              ])
+          }
+        };
+        buildFilter(Person, null, options)
+          .build({
+            where: {
+              firstName: { $equalsLower: 'f00' }
+            }
+          })
+          .then(result => {
+            result.should.be.an.an('array')
+            result.should.have.length(1);
+            result[0].firstName.should.equal('F00');
+            done();
+          })
+          .catch(done);
+      });
+
       it('should override existing operator', done => {
         const options = {
           operators: {

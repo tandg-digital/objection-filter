@@ -155,3 +155,30 @@ An example of operator usage
 ```
 
 All operators can be used with `where` to filter the root model or eagerly loaded models, or with `require` to filter the root model based on related models.
+
+#### Custom Operators
+
+If the built in filter operators aren't quite enough, custom operators can be added. A common use case for this may be to add a `lower case string comparison` operator, which may vary in implementation depending on the SQL dialect.
+
+Example:
+
+```js
+const options = {
+  operators: {
+    $equalsLower: (property, operand, builder) =>
+      builder.whereRaw('LOWER(??) = ?', [
+        property,
+        operand.toLowerCase()
+      ])
+  }
+};
+
+buildFilter(Person, null, options)
+  .build({
+    where: {
+      firstName: { $equalsLower: 'john' }
+    }
+  })
+```
+
+The `$equalsLower` operator can now be used as a new operator and will use the custom operator callback specified.
