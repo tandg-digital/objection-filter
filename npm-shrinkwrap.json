@@ -1,6 +1,6 @@
 {
   "name": "objection-filter",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "dependencies": {
     "acorn": {
       "version": "5.4.1",
@@ -890,9 +890,9 @@
       "dev": true
     },
     "eslint": {
-      "version": "4.18.0",
+      "version": "4.18.1",
       "from": "eslint@>=4.18.0 <5.0.0",
-      "resolved": "https://registry.npmjs.org/eslint/-/eslint-4.18.0.tgz",
+      "resolved": "https://registry.npmjs.org/eslint/-/eslint-4.18.1.tgz",
       "dev": true,
       "dependencies": {
         "ansi-regex": {
@@ -1279,9 +1279,9 @@
           "dev": true
         },
         "micromatch": {
-          "version": "3.1.6",
+          "version": "3.1.8",
           "from": "micromatch@>=3.0.4 <4.0.0",
-          "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-3.1.6.tgz",
+          "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-3.1.8.tgz",
           "dev": true
         }
       }
