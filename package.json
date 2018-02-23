@@ -1,6 +1,6 @@
 {
   "name": "objection-filter",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "engines": {
