@@ -52,13 +52,26 @@ module.exports = class FilterQueryBuilder {
     } = params;
 
     applyFields(fields, this._builder);
-    applyEager(eager, this._builder);
     applyWhere(params.where, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
     applyOrder(order, this._builder);
+
+    // Clone the query before adding pagination functions in case of counting
+    this.countQuery = this._builder.clone();
+
+    applyEager(eager, this._builder);
     applyLimit(limit, offset, this._builder);
 
     return this._builder;
+  }
+
+  count() {
+    const query = this
+      .countQuery
+      .count('* AS count')
+      .first();
+
+    return query.then(result => result.count);
   }
 
   /**
@@ -71,7 +84,7 @@ module.exports = class FilterQueryBuilder {
   }
 };
 
-const applyEager = function(eager, builder) {
+const applyEager = function (eager, builder) {
   builder.eager(eager);
 };
 module.exports.applyEager = applyEager;
@@ -85,7 +98,7 @@ module.exports.applyEager = applyEager;
  * @param {QueryBuilder} builder The root query builder
  * @param {Function} applyOperations Handler for applying operations
  */
-const applyRequire = function(filter = {}, builder, utils = {}) {
+const applyRequire = function (filter = {}, builder, utils = {}) {
   const { applyOperations } = utils;
 
   if (Object.keys(filter).length === 0) return builder;
@@ -111,7 +124,7 @@ const applyRequire = function(filter = {}, builder, utils = {}) {
 
     // Without a relation, a "require" is equivalent to a "where" on the root model
     if (!relationName)
-      return applyWhere({[propertyName]: andExpression}, builder, utils);
+      return applyWhere({ [propertyName]: andExpression }, builder, utils);
 
     relatedPropertyCount++;
     applyOperations(fullyQualifiedProperty, andExpression, filterQuery);
@@ -143,8 +156,8 @@ module.exports.applyRequire = applyRequire;
  * @param {QueryBuilder} builder The root query builder
  * @param {Function} applyOperations Handler for applying operations
  */
-const applyWhere = function(filter = {}, builder, utils = {}) {
-  const  { applyOperations } = utils;
+const applyWhere = function (filter = {}, builder, utils = {}) {
+  const { applyOperations } = utils;
   const Model = builder._modelClass;
 
   _.forEach(filter, (andExpression, property) => {
@@ -174,7 +187,7 @@ module.exports.applyWhere = applyWhere;
  * @param {String} order An comma delimited order expression
  * @param {QueryBuilder} builder The root query builder
  */
-const applyOrder = function(order, builder) {
+const applyOrder = function (order, builder) {
   if (!order) return;
   const Model = builder._modelClass;
 
@@ -221,7 +234,7 @@ const selectFields = (fields = [], builder, relationName) => {
  * @param {Array<String>} fields An array of dot notation fields
  * @param {QueryBuilder} builder The root query builder
  */
-const applyFields = function(fields = [], builder) {
+const applyFields = function (fields = [], builder) {
   const Model = builder._modelClass;
 
   // Group fields by relation e.g. ["a.b.name", "a.b.id"] => {"a.b": ["name", "id"]}
@@ -250,7 +263,7 @@ const applyFields = function(fields = [], builder) {
 };
 module.exports.applyFields = applyFields;
 
-const applyLimit = function(limit, offset, builder) {
+const applyLimit = function (limit, offset, builder) {
   if (limit)
     builder.limit(limit);
   if (offset)
