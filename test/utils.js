@@ -33,7 +33,7 @@ module.exports = {
 
   createDb: function (session) {
     return session.knex.schema
-      .createTableIfNotExists('Person', function (table) {
+      .createTable('Person', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.integer('age');
         table.biginteger('pid').unsigned().references('Person.id').index();
@@ -41,17 +41,17 @@ module.exports = {
         table.string('lastName');
         table.string('nickName');
       })
-      .createTableIfNotExists('Animal', function (table) {
+      .createTable('Animal', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('ownerId').unsigned().references('Person.id').index();
         table.string('name').index();
       })
-      .createTableIfNotExists('Movie', function (table) {
+      .createTable('Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.string('name').index();
         table.string('code');
       })
-      .createTableIfNotExists('Person_Movie', function (table) {
+      .createTable('Person_Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('actorId').unsigned().references('Person.id').index();
         table.biginteger('movieId').unsigned().references('Movie.id').index();
