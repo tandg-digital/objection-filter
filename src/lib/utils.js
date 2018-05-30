@@ -148,6 +148,7 @@ module.exports.Operations = function(options = {}) {
           applyLogicalExpression(rhs, subQueryBuilder, false, propertyTransform);
         } else {
           const fullyQualifiedProperty = propertyTransform(lhs);
+          console.log('fullyQualifiedProperty', fullyQualifiedProperty)
 
           // The lhs is a property name
           handleProperty(fullyQualifiedProperty, rhs, subQueryBuilder);
@@ -155,7 +156,7 @@ module.exports.Operations = function(options = {}) {
       }
     });
 
-    return getPropertiesFromExpression(expression, propertyTransform);
+    return getPropertiesFromExpression(expression);
   };
 
   /**

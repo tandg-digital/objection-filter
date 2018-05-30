@@ -113,10 +113,6 @@ const applyRequire = function (filter = {}, builder, utils = {}) {
     .query()
     .distinct(idColumn);
 
-  // Do all the joins at once
-  const relationExpression = createRelationExpression(Object.keys(filter));
-  filterQuery.joinRelation(relationExpression);
-
   // TODO: Don't join if no related properties were used anywhere?
   const propertiesSet = applyOperations(
     filter,
@@ -131,8 +127,10 @@ const applyRequire = function (filter = {}, builder, utils = {}) {
     }
   );
 
-  // TODO: Do all the joins based on all used properties
-  console.log('set', propertiesSet);
+  // If there weren't any related properties, don't bother joining
+  if (propertiesSet.length === 0)
+    return builder;
+
   filterQuery.joinRelation(createRelationExpression(propertiesSet));
 
   const filterQueryAlias = 'filter_query';
