@@ -68,6 +68,143 @@ module.exports.Operations = function(options = {}) {
   const allOperators = Object.assign({}, defaultOperators, operators);
 
   /**
+   * Given a logical expression return an array of all properties
+   * @param {Object} expression
+   */
+  const getPropertiesFromExpression = function(expression = {}) {
+    let properties = [];
+
+    for (let lhs in expression) {
+      const rhs = expression[lhs];
+
+      if (lhs === '$or') {
+        const subExpressions = rhs; // Should be an array
+        for (let subExpression of subExpressions)
+          properties = properties.concat(getPropertiesFromExpression(subExpression));
+      } else if (lhs === '$and') {
+        properties = properties.concat(getPropertiesFromExpression(rhs));
+      } else {
+        properties.push(lhs);
+      }
+    }
+
+    return properties;
+  };
+
+  /**
+   * Heuristic:
+   * 1. Start with an expression {} and iterate its keys
+   * 2. Each [key] will either be a LOGICAL_OPERATOR or a PROPERTY
+   * 3. If it's a LOGICAL_OPERATOR, pass back to the same function
+   * 4. If it's a property, go to another function that stores this property name
+   *
+   * 5. Once a property is 'hit', it is maintained for the rest of the tree nodes
+   */
+  const handleProperty = function(propertyName, expression = {}, builder) {
+    console.log(
+      `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
+    );
+
+    // If the rhs is a primitive, assume equality
+    if (typeof expression !== 'object')
+      return allOperators.$equals(propertyName, expression, builder);
+
+    for (let lhs in expression) {
+      const operationHandler = allOperators[lhs];
+      const rhs = expression[lhs];
+
+      if (!operationHandler)
+        throw new Error(`The operator [${lhs}] does not exist`);
+
+      operationHandler(propertyName, rhs, builder);
+    }
+  };
+
+  /**
+   *
+   * @param {Object} expression
+   * @param {QueryBuilder} builder
+   * @param {Boolean} or
+   * @param {Function} propertyTransform
+   */
+  const applyLogicalExpression = function(
+    expression = {},
+    builder,
+    or = false,
+    propertyTransform = propertyName => propertyName
+  ) {
+    console.log('applyLogicalExpression', expression);
+
+    builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
+      for (let lhs in expression) {
+        const rhs = expression[lhs];
+        console.log(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
+
+        if (lhs === '$or') {
+          const subExpressions = rhs; // Should be an array
+          for (let subExpression of subExpressions)
+            applyLogicalExpression(subExpression, subQueryBuilder, true, propertyTransform);
+        } else if (lhs === '$and') {
+          applyLogicalExpression(rhs, subQueryBuilder, false, propertyTransform);
+        } else {
+          const fullyQualifiedProperty = propertyTransform(lhs);
+
+          // The lhs is a property name
+          handleProperty(fullyQualifiedProperty, rhs, subQueryBuilder);
+        }
+      }
+    });
+
+    return getPropertiesFromExpression(expression, propertyTransform);
+  };
+
+  /**
+   * Apply an object notation eager object with scope based filtering
+   * @param {Object} expression
+   * @param {QueryBuilder} builder
+   */
+  const applyEagerFilter = function(expression = {}, builder, path = []) {
+    console.log('=== path ===', path);
+
+    // Walk the eager tree
+    for (let lhs in expression) {
+      const rhs = expression[lhs];
+
+      if (typeof rhs === 'boolean')
+        continue;
+
+      // rhs is an object
+      const relationName = rhs.$relation ? rhs.$relation : lhs;
+      const newPath = path.concat(relationName);
+      const relationExpression = newPath.join('.');
+
+      if (rhs.$filter) {
+        console.log('applying modifyEager', relationExpression, rhs.$filter);
+        const filterCopy = Object.assign({}, rhs.$filter);
+
+        // Could potentially apply all 'modifyEagers' at the end
+        builder.modifyEager(relationExpression, subQueryBuilder => {
+          applyLogicalExpression(filterCopy, subQueryBuilder);
+        });
+
+        delete rhs.$filter;
+
+        expression[lhs] = rhs;
+      }
+
+      if (Object.keys(rhs).length > 0)
+        applyEagerFilter(rhs, builder, newPath);
+    }
+
+    return expression;
+  };
+
+  const applyEagerObject = function(expression = {}, builder) {
+    const expressionWithoutFilters = applyEagerFilter(expression, builder, []);
+    builder.eager(expressionWithoutFilters);
+  };
+
+  /**
    * Apply an number of operations onto a single property
    * If 'or' is specified, then wrap the condition with a knex subquery builder scope
    * @param {String} propertyName
@@ -104,5 +241,9 @@ module.exports.Operations = function(options = {}) {
     operatorHandler(property, operand, builder);
   };
 
-  return { applyOperations };
+  return {
+    applyOperations: applyLogicalExpression,
+    handleProperty: handleProperty,
+    applyEagerObject: applyEagerObject
+  };
 };
