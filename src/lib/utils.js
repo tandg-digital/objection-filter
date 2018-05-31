@@ -1,4 +1,6 @@
 const _ = require('lodash');
+const debug = require('debug')('objection:filter');
+const OR = '$or', AND = '$and';
 
 /**
  * For a property "a.b.c", slice it into relationName: "a.b", "propertyName": "c" and
@@ -58,14 +60,36 @@ module.exports.Operations = function(options = {}) {
     $exists: (property, operand, builder) => operand ?
       builder.whereNotNull(property) :
       builder.whereNull(property),
-    $or: (property, operand, builder) => builder.where(subQueryBuilder => {
+    $or: (property, operand, builder) => {
+      const iterateLogical = iterateLogicalExpression({
+        handler: function(
+          propertyName,
+          expression = {},
+          builder
+        )
+      })
+
+      return builder.where(subQueryBuilder => {
         for (let andExpression of operand)
           applyOperations(property, andExpression, subQueryBuilder, true);
       })
+    }
   };
   const { operators } = options;
   // Custom operators take override default operators
   const allOperators = Object.assign({}, defaultOperators, operators);
+
+  /**
+   * If the input is an object, transform it into an array of key:value pairs
+   * @param {Object|Array} objectOrArray
+   * @returns {Array<Object>}
+   */
+  const arrayize = function(objectOrArray) {
+    if (_.isArray(objectOrArray))
+      return objectOrArray;
+    else
+      return _.toPairs(objectOrArray).map(item => ({ [item[0]]: item[1] }));
+  };
 
   /**
    * Given a logical expression return an array of all properties
@@ -77,12 +101,9 @@ module.exports.Operations = function(options = {}) {
     for (let lhs in expression) {
       const rhs = expression[lhs];
 
-      if (lhs === '$or') {
-        const subExpressions = rhs; // Should be an array
-        for (let subExpression of subExpressions)
+      if ([OR, AND].includes(lhs)) {
+        for (let subExpression of arrayize(rhs))
           properties = properties.concat(getPropertiesFromExpression(subExpression));
-      } else if (lhs === '$and') {
-        properties = properties.concat(getPropertiesFromExpression(rhs));
       } else {
         properties.push(lhs);
       }
@@ -92,16 +113,18 @@ module.exports.Operations = function(options = {}) {
   };
 
   /**
-   * Heuristic:
-   * 1. Start with an expression {} and iterate its keys
-   * 2. Each [key] will either be a LOGICAL_OPERATOR or a PROPERTY
-   * 3. If it's a LOGICAL_OPERATOR, pass back to the same function
-   * 4. If it's a property, go to another function that stores this property name
-   *
-   * 5. Once a property is 'hit', it is maintained for the rest of the tree nodes
+   * Apply a subset of operators on a single property
+   * TODO: Should remember the current logical context (e.g. OR/AND)
+   * @param {String} propertyName
+   * @param {Object} expression
+   * @param {QueryBuilder} builder
    */
-  const handleProperty = function(propertyName, expression = {}, builder) {
-    console.log(
+  const applyPropertyExpression = function(
+    propertyName,
+    expression = {},
+    builder
+  ) {
+    debug(
       `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
     );
 
@@ -113,45 +136,51 @@ module.exports.Operations = function(options = {}) {
       const operationHandler = allOperators[lhs];
       const rhs = expression[lhs];
 
-      if (!operationHandler)
-        throw new Error(`The operator [${lhs}] does not exist`);
+      if (!operationHandler) {
+        debug(`The operator [${lhs}] does not exist, skipping`);
+        continue;
+      }
 
       operationHandler(propertyName, rhs, builder);
     }
   };
 
   /**
-   *
+   * Heuristic:
+   * 1. Start with an expression {} and iterate its keys
+   * 2. Each [key] will either be a LOGICAL_OPERATOR or a PROPERTY
+   * 3. If it's a LOGICAL_OPERATOR, pass back to the same function
+   * 4. If it's a property, go to another function that stores this property name
+   * 5. Once a property is 'hit', it is maintained for the rest of the tree nodes
+   * TODO: Idea, applyLogicalExpression is a generic function which iterates a tree
+   * with a builder until it hits something that IS NOT a logical operator, then
+   * it does SOMETHING, that something is applyPropertyExpression() in the top level
+   * case, but after it's hit a property, it may be a slightly different function e.g.
+   * the propertyName is persisted
    * @param {Object} expression
    * @param {QueryBuilder} builder
    * @param {Boolean} or
    * @param {Function} propertyTransform
    */
-  const applyLogicalExpression = function(
+  const applyLogicalExpression2 = function(
     expression = {},
     builder,
     or = false,
     propertyTransform = propertyName => propertyName
   ) {
-    console.log('applyLogicalExpression', expression);
+    debug('applyLogicalExpression()', expression);
 
     builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
       for (let lhs in expression) {
         const rhs = expression[lhs];
-        console.log(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
+        debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-        if (lhs === '$or') {
-          const subExpressions = rhs; // Should be an array
-          for (let subExpression of subExpressions)
-            applyLogicalExpression(subExpression, subQueryBuilder, true, propertyTransform);
-        } else if (lhs === '$and') {
-          applyLogicalExpression(rhs, subQueryBuilder, false, propertyTransform);
+        if ([OR, AND].includes(lhs)) {
+          for (let subExpression of arrayize(rhs))
+            applyLogicalExpression(subExpression, subQueryBuilder, lhs === OR, propertyTransform);
         } else {
-          const fullyQualifiedProperty = propertyTransform(lhs);
-          console.log('fullyQualifiedProperty', fullyQualifiedProperty)
-
           // The lhs is a property name
-          handleProperty(fullyQualifiedProperty, rhs, subQueryBuilder);
+          applyPropertyExpression(propertyTransform(lhs), rhs, subQueryBuilder);
         }
       }
     });
@@ -160,13 +189,58 @@ module.exports.Operations = function(options = {}) {
   };
 
   /**
+   * Iterates a logical expression until it hits a non-logical operator
+   * Then jumps out and calls the provided handler
+   * @param {Function} handler
+   * @param {Function} propertyTransform
+   */
+  const iterateLogicalExpression = function({ handler, propertyTransform }) {
+    const iterator = function(expression = {}, builder, or = false) {
+      console.log('iterator', expression);
+
+      builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
+        for (let lhs in expression) {
+          const rhs = expression[lhs];
+          debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
+
+          if ([OR, AND].includes(lhs)) {
+            for (let subExpression of arrayize(rhs)) {
+              iterator(
+                subExpression,
+                subQueryBuilder,
+                lhs === OR
+              );
+            }
+          } else {
+            // The lhs is a property name
+            handler(propertyTransform(lhs), rhs, subQueryBuilder);
+          }
+        }
+      });
+
+      return getPropertiesFromExpression(expression);
+    };
+
+    return iterator;
+  };
+
+  const applyLogicalExpression = iterateLogicalExpression({
+    handler: applyPropertyExpression,
+    propertyTransform: function(propertyName) {
+      const {
+        fullyQualifiedProperty
+      } = sliceRelation(propertyName);
+
+      return fullyQualifiedProperty;
+    }
+  });
+
+  /**
    * Apply an object notation eager object with scope based filtering
    * @param {Object} expression
    * @param {QueryBuilder} builder
    */
   const applyEagerFilter = function(expression = {}, builder, path = []) {
-    console.log('=== path ===', path);
-
     // Walk the eager tree
     for (let lhs in expression) {
       const rhs = expression[lhs];
@@ -180,7 +254,7 @@ module.exports.Operations = function(options = {}) {
       const relationExpression = newPath.join('.');
 
       if (rhs.$filter) {
-        console.log('applying modifyEager', relationExpression, rhs.$filter);
+        debug('applying modifyEager', relationExpression, rhs.$filter);
         const filterCopy = Object.assign({}, rhs.$filter);
 
         // Could potentially apply all 'modifyEagers' at the end
@@ -212,6 +286,8 @@ module.exports.Operations = function(options = {}) {
    * @param {Object} operations e.g. { "$gt": 5, "$lt": 10 }
    * @param {QueryBuilder} builder
    * @param {Boolean} or Whether the condition should be wrapped with AND or OR
+   * TODO: Merge into applyPropertyExpression(), with applyPropertyExpression or parameter to remember
+   * the current state of the operation
    */
   const applyOperations = (propertyName, operations, builder, or = false) => {
     if (or) {
@@ -244,7 +320,7 @@ module.exports.Operations = function(options = {}) {
 
   return {
     applyOperations: applyLogicalExpression,
-    handleProperty: handleProperty,
+    handleProperty: applyPropertyExpression,
     applyEagerObject: applyEagerObject
   };
 };
