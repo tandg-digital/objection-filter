@@ -60,19 +60,38 @@ module.exports.Operations = function(options = {}) {
     $exists: (property, operand, builder) => operand ?
       builder.whereNotNull(property) :
       builder.whereNull(property),
-    $or: (property, operand, builder) => {
+    /**
+     * @param {String} property
+     * @param {Array} items Must be an array of objects/values
+     * @param {QueryBuilder} builder
+     */
+    $or: (property, items, builder) => {
+      // Iterate the logical expression until it hits an operation e.g. $gte
       const iterateLogical = iterateLogicalExpression({
-        handler: function(
-          propertyName,
-          expression = {},
-          builder
-        )
-      })
+        handler: function(operator, value, subQueryBuilder) {
+          console.log({ operator, value });
 
-      return builder.where(subQueryBuilder => {
-        for (let andExpression of operand)
-          applyOperations(property, andExpression, subQueryBuilder, true);
-      })
+          const operationHandler = allOperators[operator];
+          operationHandler(property, value, subQueryBuilder);
+        }
+      });
+
+      iterateLogical({ $or: items }, builder, true);
+
+      // for (let expressionOrValue of items) {
+      //   // If the array value is a primitive, assume equality e.g. $or: [1,2,3]
+      //   if (typeof expressionOrValue !== 'object') {
+      //     console.log('Detected primitive', expressionOrValue);
+      //     builder.where(property, expressionOrValue);
+      //     continue;
+      //   }
+
+      //   iterateLogical(expressionOrValue, builder, true);
+      // }
+
+      // return builder.where(subQueryBuilder => {
+
+      // })
     }
   };
   const { operators } = options;
@@ -194,11 +213,15 @@ module.exports.Operations = function(options = {}) {
    * @param {Function} handler
    * @param {Function} propertyTransform
    */
-  const iterateLogicalExpression = function({ handler, propertyTransform }) {
+  const iterateLogicalExpression = function({ handler, propertyTransform = n => n }) {
     const iterator = function(expression = {}, builder, or = false) {
       console.log('iterator', expression);
 
       builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
+        // Assume equality if the target expression is a primitive
+        if (typeof expression !== 'object')
+          return handler('$equals', expression, subQueryBuilder);
+
         for (let lhs in expression) {
           const rhs = expression[lhs];
           debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
