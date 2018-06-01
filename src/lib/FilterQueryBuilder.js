@@ -16,6 +16,7 @@
  * in the same scope, since there's a join
  */
 const _ = require('lodash');
+const { debug } = require('../config');
 const {
   sliceRelation,
   Operations
