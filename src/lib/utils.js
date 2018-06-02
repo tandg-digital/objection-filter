@@ -1,3 +1,9 @@
+/**
+ * The utils helpers are a set of common helpers to be passed around during
+ * filter execution. It stores all default operators, custom operators and
+ * functions which directly touch these operators.
+ */
+
 const _ = require('lodash');
 const { debug } = require('../config');
 const { iterateLogicalExpression } = require('./LogicalIterator');
@@ -66,9 +72,8 @@ module.exports.Operations = function(options = {}) {
      * @param {QueryBuilder} builder
      */
     $or: (property, items, builder) => {
+      // Any $or after a property has been locked can still be nested with other $or's
       const onExit = function(operator, value, subQueryBuilder) {
-        console.log({ operator, value });
-
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
@@ -122,67 +127,5 @@ module.exports.Operations = function(options = {}) {
     }
   };
 
-  const applyLogicalExpression = iterateLogicalExpression({
-    onExit: applyPropertyExpression,
-    onLiteral: function(operator, value, builder) {
-      throw new Error('Filter is invalid');
-    },
-    propertyTransform: function(propertyName) {
-      const {
-        fullyQualifiedProperty
-      } = sliceRelation(propertyName);
-
-      return fullyQualifiedProperty;
-    }
-  });
-
-  /**
-   * Apply an object notation eager object with scope based filtering
-   * @param {Object} expression
-   * @param {QueryBuilder} builder
-   */
-  const applyEagerFilter = function(expression = {}, builder, path = []) {
-    // Walk the eager tree
-    for (let lhs in expression) {
-      const rhs = expression[lhs];
-
-      if (typeof rhs === 'boolean')
-        continue;
-
-      // rhs is an object
-      const relationName = rhs.$relation ? rhs.$relation : lhs;
-      const newPath = path.concat(relationName);
-      const relationExpression = newPath.join('.');
-
-      if (rhs.$filter) {
-        debug('applying modifyEager', relationExpression, rhs.$filter);
-        const filterCopy = Object.assign({}, rhs.$filter);
-
-        // Could potentially apply all 'modifyEagers' at the end
-        builder.modifyEager(relationExpression, subQueryBuilder => {
-          applyLogicalExpression(filterCopy, subQueryBuilder);
-        });
-
-        delete rhs.$filter;
-
-        expression[lhs] = rhs;
-      }
-
-      if (Object.keys(rhs).length > 0)
-        applyEagerFilter(rhs, builder, newPath);
-    }
-
-    return expression;
-  };
-
-  const applyEagerObject = function(expression = {}, builder) {
-    const expressionWithoutFilters = applyEagerFilter(expression, builder, []);
-    builder.eager(expressionWithoutFilters);
-  };
-
-  return {
-    applyOperations: applyLogicalExpression,
-    handleProperty: applyPropertyExpression,
-    applyEagerObject: applyEagerObject
-  };
+  return { applyPropertyExpression };
 };

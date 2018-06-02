@@ -24,6 +24,7 @@ const {
 const {
   createRelationExpression
 } = require('./ExpressionBuilder');
+const { iterateLogicalExpression } = require('./LogicalIterator');
 
 module.exports = class FilterQueryBuilder {
   /**
@@ -84,11 +85,64 @@ module.exports = class FilterQueryBuilder {
   }
 };
 
-const applyEager = function (eager, builder, utils = {}) {
-  const { applyEagerObject } = utils;
+/**
+ * Apply an object notation eager object with scope based filtering
+ * @param {Object} expression
+ * @param {QueryBuilder} builder
+ */
+const applyEagerFilter = function(expression = {}, builder, path = [], utils = {}) {
+  const { applyPropertyExpression } = utils;
+  // Transform column e.g. "Movies"."name" rather than "name"
+  const applyLogicalExpression = iterateLogicalExpression({
+    onExit: applyPropertyExpression,
+    onLiteral: function() {
+      throw new Error('Filter is invalid');
+    },
+    propertyTransform: (p, _builder) => [_builder._modelClass.name, p].join('.')
+  });
 
+  // Walk the eager tree
+  for (let lhs in expression) {
+    const rhs = expression[lhs];
+    debug(`Eager Filter lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
+
+    if (typeof rhs === 'boolean')
+      continue;
+
+    // rhs is an object
+    const relationName = rhs.$relation ? rhs.$relation : lhs;
+    const newPath = path.concat(relationName);
+    const relationExpression = newPath.join('.');
+
+    if (rhs.$filter) {
+      debug('applying modifyEager', relationExpression, rhs.$filter);
+      const filterCopy = Object.assign({}, rhs.$filter);
+
+      // TODO: Could potentially apply all 'modifyEagers' at the end
+      builder.modifyEager(relationExpression, subQueryBuilder => {
+        applyLogicalExpression(filterCopy, subQueryBuilder);
+      });
+
+      delete rhs.$filter;
+
+      expression[lhs] = rhs;
+    }
+
+    if (Object.keys(rhs).length > 0)
+      applyEagerFilter(rhs, builder, newPath, utils);
+  }
+
+  return expression;
+};
+
+const applyEagerObject = function(expression = {}, builder, utils = {}) {
+  const expressionWithoutFilters = applyEagerFilter(expression, builder, [], utils);
+  builder.eager(expressionWithoutFilters);
+};
+
+const applyEager = function (eager, builder, utils = {}) {
   if (typeof eager === 'object')
-    return applyEagerObject(eager, builder);
+    return applyEagerObject(eager, builder, utils);
 
   builder.eager(eager);
 };
@@ -101,10 +155,17 @@ module.exports.applyEager = applyEager;
  * This prevents joining tables multiple times, and optimizes number of joins
  * @param {Object} filter
  * @param {QueryBuilder} builder The root query builder
- * @param {Function} applyOperations Handler for applying operations
  */
 const applyRequire = function (filter = {}, builder, utils = {}) {
-  const { applyOperations, handleProperty } = utils;
+  const { applyPropertyExpression } = utils;
+  // Transform columns to aliased name e.g. movies.person.name => movies:person.name
+  const applyLogicalExpression = iterateLogicalExpression({
+    onExit: applyPropertyExpression,
+    onLiteral: function(operator, value, builder) {
+      throw new Error('Filter is invalid');
+    },
+    propertyTransform: p => sliceRelation(p).fullyQualifiedProperty
+  });
 
   if (Object.keys(filter).length === 0) return builder;
   const Model = builder._modelClass;
@@ -114,18 +175,11 @@ const applyRequire = function (filter = {}, builder, utils = {}) {
     .query()
     .distinct(idColumn);
 
-  // TODO: Don't join if no related properties were used anywhere?
-  const propertiesSet = applyOperations(
+  const propertiesSet = applyLogicalExpression(
     filter,
     filterQuery,
     false,
-    function(propertyName) {
-      const {
-        fullyQualifiedProperty
-      } = sliceRelation(propertyName);
-
-      return fullyQualifiedProperty;
-    }
+    p => sliceRelation(p).fullyQualifiedProperty
   );
 
   // If there weren't any related properties, don't bother joining
@@ -152,10 +206,9 @@ module.exports.applyRequire = applyRequire;
  * but in reality, it should allow an AND of multiple operations
  * @param {Object} filter The filter object
  * @param {QueryBuilder} builder The root query builder
- * @param {Function} applyOperations Handler for applying operations
  */
 const applyWhere = function (filter = {}, builder, utils = {}) {
-  const { applyOperations, handleProperty } = utils;
+  const { applyPropertyExpression } = utils;
   const Model = builder._modelClass;
 
   _.forEach(filter, (andExpression, property) => {
@@ -164,13 +217,13 @@ const applyWhere = function (filter = {}, builder, utils = {}) {
     if (!relationName) {
       // Root level where should include the root table name
       const fullyQualifiedProperty = `${Model.tableName}.${propertyName}`;
-      return handleProperty(fullyQualifiedProperty, andExpression, builder);
+      return applyPropertyExpression(fullyQualifiedProperty, andExpression, builder);
     }
 
     // Eager query fields should include the eager model table name
     builder.modifyEager(relationName, eagerBuilder => {
       const fullyQualifiedProperty = `${eagerBuilder._modelClass.tableName}.${propertyName}`;
-      handleProperty(fullyQualifiedProperty, andExpression, eagerBuilder);
+      applyPropertyExpression(fullyQualifiedProperty, andExpression, eagerBuilder);
     });
   });
 

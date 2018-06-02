@@ -154,6 +154,43 @@ describe('logical expression filters', function () {
             .catch(done);
         });
       });
+
+      describe('error conditions', function() {
+        const validationError = new Error('should have thrown an error');
+
+        it('should throw an error on initial operator', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                '$gt': 1
+              }
+            })
+            .then(() => done(validationError))
+            .catch(err => done());
+        });
+
+        it('should throw an error on early literal', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                '$or': [ 'invalid' ]
+              }
+            })
+            .then(() => done(validationError))
+            .catch(err => done());
+        });
+
+        it('should throw an error on early operator', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                '$or': [{ '$gt': 1 }]
+              }
+            })
+            .then(() => done(validationError))
+            .catch(err => done());
+        });
+      });
     });
   });
 });

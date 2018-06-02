@@ -4,6 +4,8 @@ const OR = '$or', AND = '$and';
 
 /**
  * If the input is an object, transform it into an array of key:value pairs
+ * { a: 1, b: 2 } becomes [{ a: 1 }, { b: 2}]
+ * [{ a: 1 }, { b: 2}] is unchanged
  * @param {Object|Array} objectOrArray
  * @returns {Array<Object>}
  */
@@ -36,19 +38,17 @@ const getPropertiesFromExpression = function(expression = {}) {
 };
 
 /**
- * Heuristic:
- * 1. Start with an expression {} and iterate its keys
- * 2. Each [key] will either be a LOGICAL_OPERATOR or a PROPERTY
- * 3. If it's a LOGICAL_OPERATOR, pass back to the same function
- * 4. If it's a property, go to another function that stores this property name
- * 5. Once a property is 'hit', it is maintained for the rest of the tree nodes
+ * Returns a function which iterates an object composed of $or/$and operators
+ * Values of $or/$and operators can be either objects or arrays
+ * e.g. { $or: [...] }, { $or: { ... } }
+ * If the input to the iterator is a primitive, e.g. { $or: [1,2,3] }
+ * then the onLiteral callback will be called with (1), (2) and (3)
+ * If the input is a non-logical operator e.g. { $or: [ { count: 5 } ] }
+ * then the onExit callback will be called with ('count', 5)
  *
- * Iterates a logical expression until it hits a non-logical operator
- * Then jumps out and calls the provided handler
  * Valid logical expressions include:
- * "test" - A primitive, which will transform into an equality operator
- * { $gt: 1, $lt: 5 } - A non-logical expression, will be iterated (n=2) and the
- *                      handler called twice, once per operator/operand
+ * { $gt: 1, $lt: 5 } - A non-logical expression, will be iterated (n=2) and
+ *                      onExit called twice, once per operator/operand
  * { $or: [ ... ] } - An $or with an array of items (e.g. above)
  * { $or: { a: 1, b: 2 } } - An object,  will be 'arrayized' into an array
  * @param {Function} onExit A function to call once a non-logical operator is hit
@@ -56,12 +56,12 @@ const getPropertiesFromExpression = function(expression = {}) {
  * @param {Function} propertyTransform
  */
 const iterateLogicalExpression = function({
-  onExit,
-  onLiteral,
+  onExit, // onExit(propertyOrOperator, value, builder)
+  onLiteral, // onLiteral(value, builder)
   propertyTransform = n => n
 }) {
   const iterator = function(expression = {}, builder, or = false) {
-    console.log('iterator', expression);
+    debug('Iterating through', expression);
 
     builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
       // Assume equality if the target expression is a primitive
@@ -82,7 +82,7 @@ const iterateLogicalExpression = function({
           }
         } else {
           // The lhs is either a non-logical operator or a property name
-          onExit(propertyTransform(lhs), rhs, subQueryBuilder);
+          onExit(propertyTransform(lhs, builder), rhs, subQueryBuilder);
         }
       }
     });
