@@ -93,7 +93,7 @@ module.exports = class FilterQueryBuilder {
  * @param {Object} expression
  * @param {QueryBuilder} builder
  */
-const applyEagerFilter = function(expression = {}, builder, path = [], utils = {}) {
+const applyEagerFilter = function(expression = {}, builder, path = [], utils) {
   const { applyPropertyExpression } = utils;
   const applyLogicalExpression = iterateLogicalExpression({
     onExit: applyPropertyExpression,
@@ -102,21 +102,26 @@ const applyEagerFilter = function(expression = {}, builder, path = [], utils = {
     }
   });
 
+  debug('applyEagerFilter(', { expression, path }, ')');
+
   // Walk the eager tree
   for (let lhs in expression) {
     const rhs = expression[lhs];
     debug(`Eager Filter lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-    if (typeof rhs === 'boolean')
+    if (typeof rhs === 'boolean' || typeof rhs === 'string')
       continue;
 
     // rhs is an object
     const relationName = rhs.$relation ? rhs.$relation : lhs;
-    const newPath = path.concat(relationName);
+    const eagerName = rhs.$relation ? `${rhs.$relation} as ${lhs}` : lhs;
+
+    // including aliases e.g. "a as b.c as d"
+    const newPath = path.concat(eagerName);
     const relationExpression = newPath.join('.');
 
     if (rhs.$filter) {
-      debug('applying modifyEager', relationExpression, rhs.$filter);
+      debug('modifyEager(', { relationExpression, filter: rhs.$filter }, ')');
       const filterCopy = Object.assign({}, rhs.$filter);
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
@@ -141,12 +146,12 @@ const applyEagerFilter = function(expression = {}, builder, path = [], utils = {
   return expression;
 };
 
-const applyEagerObject = function(expression = {}, builder, utils = {}) {
+const applyEagerObject = function(expression = {}, builder, utils) {
   const expressionWithoutFilters = applyEagerFilter(expression, builder, [], utils);
   builder.eager(expressionWithoutFilters);
 };
 
-const applyEager = function (eager, builder, utils = {}) {
+const applyEager = function (eager, builder, utils) {
   if (typeof eager === 'object')
     return applyEagerObject(eager, builder, utils);
 
@@ -171,7 +176,7 @@ const isRelatedProperty = function(name) {
  * @param {Object} filter
  * @param {QueryBuilder} builder The root query builder
  */
-const applyRequire = function (filter = {}, builder, utils = {}) {
+const applyRequire = function (filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
 
   const applyLogicalExpression = iterateLogicalExpression({
@@ -227,7 +232,7 @@ module.exports.applyRequire = applyRequire;
  * @param {Object} filter The filter object
  * @param {QueryBuilder} builder The root query builder
  */
-const applyWhere = function (filter = {}, builder, utils = {}) {
+const applyWhere = function (filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
   const Model = builder._modelClass;
 

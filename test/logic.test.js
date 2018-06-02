@@ -92,6 +92,39 @@ describe('logical expression filters', function () {
             })
             .catch(done);
         });
+
+        it('should filter with $or before and after property name', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                '$or': [
+                  {
+                    'movies.name': {
+                      '$or': [
+                        { '$equals': 'M00' },
+                        { '$equals': 'M10' }
+                      ]
+                    }
+                  },
+                  {
+                    'movies.name': {
+                      '$or': [
+                        { '$equals': 'M20' },
+                        { '$equals': 'M30' }
+                      ]
+                    }
+                  }
+                ]
+              }
+            })
+            .then(result => {
+              result.length.should.equal(4);
+              const names = result.map(person => person.firstName);
+              names.should.deep.equal(['F09', 'F08', 'F07', 'F06']);
+              done();
+            })
+            .catch(done);
+        })
       });
 
       describe('require using $and', function() {

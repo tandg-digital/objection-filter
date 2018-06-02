@@ -168,6 +168,60 @@ describe('eager object notation', function () {
             })
             .catch(done);
         });
+
+        it('should filter using specified $relation alias', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                favorites: {
+                  $relation: 'movies',
+                  $filter: {
+                    name: 'M99'
+                  }
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(10);
+              _.map(
+                _.flatten(
+                  _.map(result, 'favorites')
+                ), 'name'
+              ).should.deep.equal(['M99']);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should filter using nested $relation aliases', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                upper: {
+                  $relation: 'parent',
+                  $filter: {
+                    firstName: 'F05'
+                  },
+                  favorites: {
+                    $relation: 'movies',
+                    $filter: {
+                      name: 'M49'
+                    }
+                  }
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(10);
+              _.map(
+                _.flatten(
+                  _.filter(_.map(result, 'upper.favorites'), _.identity)
+                ), 'name'
+              ).should.deep.equal(['M49']);
+              done();
+            })
+            .catch(done);
+        });
       });
 
       describe('error conditions', function() {
