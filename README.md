@@ -166,9 +166,9 @@ Example:
 const options = {
   operators: {
     $equalsLower: (property, operand, builder) =>
-      builder.whereRaw('LOWER(??) = ?', [
+      builder.whereRaw('LOWER(??) = LOWER(?)', [
         property,
-        operand.toLowerCase()
+        operand
       ])
   }
 };
