@@ -175,12 +175,8 @@ const applyRequire = function (filter = {}, builder, utils = {}) {
   const { applyPropertyExpression } = utils;
 
   const applyLogicalExpression = iterateLogicalExpression({
-    onExit: function(propertyName, value, _builder) {
-      // Do a where on the root model if the property isn't on a joined model
-      if (!isRelatedProperty(propertyName)) {
-        return applyPropertyExpression(propertyName, value, _builder);
-      }
-      applyPropertyExpression(propertyName, value, _builder);
+    onExit: function(propertyName, value, builder) {
+      applyPropertyExpression(propertyName, value, builder);
     },
     onLiteral: function() {
       throw new Error('Filter is invalid');
