@@ -1,4 +1,12 @@
+/**
+ * The utils helpers are a set of common helpers to be passed around during
+ * filter execution. It stores all default operators, custom operators and
+ * functions which directly touch these operators.
+ */
+
 const _ = require('lodash');
+const { debug } = require('../config');
+const { iterateLogicalExpression } = require('./LogicalIterator');
 
 /**
  * For a property "a.b.c", slice it into relationName: "a.b", "propertyName": "c" and
@@ -58,50 +66,47 @@ module.exports.Operations = function(options = {}) {
     $exists: (property, operand, builder) => operand ?
       builder.whereNotNull(property) :
       builder.whereNull(property),
-    $or: (property, operand, builder) => builder.where(subQueryBuilder => {
-        for (let andExpression of operand)
-          applyOperations(property, andExpression, subQueryBuilder, true);
-      })
+    /**
+     * @param {String} property
+     * @param {Array} items Must be an array of objects/values
+     * @param {QueryBuilder} builder
+     */
+    $or: (property, items, builder) => {
+      // Any $or after a property has been locked can still be nested with other $or's
+      const onExit = function(operator, value, subQueryBuilder) {
+        const operationHandler = allOperators[operator];
+        operationHandler(property, value, subQueryBuilder);
+      };
+      const onLiteral = function(value, subQueryBuilder) {
+        onExit('$equals', value, subQueryBuilder);
+      };
+
+      // Iterate the logical expression until it hits an operation e.g. $gte
+      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+
+      // Wrap within another builder context to prevent orWhere at ends
+      return builder.where(subQueryBuilder => {
+        iterateLogical({ $or: items }, subQueryBuilder, true);
+      });
+    }
   };
   const { operators } = options;
+
   // Custom operators take override default operators
   const allOperators = Object.assign({}, defaultOperators, operators);
 
   /**
-   * Given a logical expression return an array of all properties
+   * Apply a subset of operators on a single property
+   * @param {String} propertyName
    * @param {Object} expression
+   * @param {QueryBuilder} builder
    */
-  const getPropertiesFromExpression = function(expression = {}) {
-    let properties = [];
-
-    for (let lhs in expression) {
-      const rhs = expression[lhs];
-
-      if (lhs === '$or') {
-        const subExpressions = rhs; // Should be an array
-        for (let subExpression of subExpressions)
-          properties = properties.concat(getPropertiesFromExpression(subExpression));
-      } else if (lhs === '$and') {
-        properties = properties.concat(getPropertiesFromExpression(rhs));
-      } else {
-        properties.push(lhs);
-      }
-    }
-
-    return properties;
-  };
-
-  /**
-   * Heuristic:
-   * 1. Start with an expression {} and iterate its keys
-   * 2. Each [key] will either be a LOGICAL_OPERATOR or a PROPERTY
-   * 3. If it's a LOGICAL_OPERATOR, pass back to the same function
-   * 4. If it's a property, go to another function that stores this property name
-   *
-   * 5. Once a property is 'hit', it is maintained for the rest of the tree nodes
-   */
-  const handleProperty = function(propertyName, expression = {}, builder) {
-    console.log(
+  const applyPropertyExpression = function(
+    propertyName,
+    expression = {},
+    builder
+  ) {
+    debug(
       `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
     );
 
@@ -113,138 +118,14 @@ module.exports.Operations = function(options = {}) {
       const operationHandler = allOperators[lhs];
       const rhs = expression[lhs];
 
-      if (!operationHandler)
-        throw new Error(`The operator [${lhs}] does not exist`);
+      if (!operationHandler) {
+        debug(`The operator [${lhs}] does not exist, skipping`);
+        continue;
+      }
 
       operationHandler(propertyName, rhs, builder);
     }
   };
 
-  /**
-   *
-   * @param {Object} expression
-   * @param {QueryBuilder} builder
-   * @param {Boolean} or
-   * @param {Function} propertyTransform
-   */
-  const applyLogicalExpression = function(
-    expression = {},
-    builder,
-    or = false,
-    propertyTransform = propertyName => propertyName
-  ) {
-    console.log('applyLogicalExpression', expression);
-
-    builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
-      for (let lhs in expression) {
-        const rhs = expression[lhs];
-        console.log(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
-
-        if (lhs === '$or') {
-          const subExpressions = rhs; // Should be an array
-          for (let subExpression of subExpressions)
-            applyLogicalExpression(subExpression, subQueryBuilder, true, propertyTransform);
-        } else if (lhs === '$and') {
-          applyLogicalExpression(rhs, subQueryBuilder, false, propertyTransform);
-        } else {
-          const fullyQualifiedProperty = propertyTransform(lhs);
-          console.log('fullyQualifiedProperty', fullyQualifiedProperty)
-
-          // The lhs is a property name
-          handleProperty(fullyQualifiedProperty, rhs, subQueryBuilder);
-        }
-      }
-    });
-
-    return getPropertiesFromExpression(expression);
-  };
-
-  /**
-   * Apply an object notation eager object with scope based filtering
-   * @param {Object} expression
-   * @param {QueryBuilder} builder
-   */
-  const applyEagerFilter = function(expression = {}, builder, path = []) {
-    console.log('=== path ===', path);
-
-    // Walk the eager tree
-    for (let lhs in expression) {
-      const rhs = expression[lhs];
-
-      if (typeof rhs === 'boolean')
-        continue;
-
-      // rhs is an object
-      const relationName = rhs.$relation ? rhs.$relation : lhs;
-      const newPath = path.concat(relationName);
-      const relationExpression = newPath.join('.');
-
-      if (rhs.$filter) {
-        console.log('applying modifyEager', relationExpression, rhs.$filter);
-        const filterCopy = Object.assign({}, rhs.$filter);
-
-        // Could potentially apply all 'modifyEagers' at the end
-        builder.modifyEager(relationExpression, subQueryBuilder => {
-          applyLogicalExpression(filterCopy, subQueryBuilder);
-        });
-
-        delete rhs.$filter;
-
-        expression[lhs] = rhs;
-      }
-
-      if (Object.keys(rhs).length > 0)
-        applyEagerFilter(rhs, builder, newPath);
-    }
-
-    return expression;
-  };
-
-  const applyEagerObject = function(expression = {}, builder) {
-    const expressionWithoutFilters = applyEagerFilter(expression, builder, []);
-    builder.eager(expressionWithoutFilters);
-  };
-
-  /**
-   * Apply an number of operations onto a single property
-   * If 'or' is specified, then wrap the condition with a knex subquery builder scope
-   * @param {String} propertyName
-   * @param {Object} operations e.g. { "$gt": 5, "$lt": 10 }
-   * @param {QueryBuilder} builder
-   * @param {Boolean} or Whether the condition should be wrapped with AND or OR
-   */
-  const applyOperations = (propertyName, operations, builder, or = false) => {
-    if (or) {
-      return builder.orWhere(eagerQueryBuilder => applyOperations(
-        propertyName, operations, eagerQueryBuilder
-      ));
-    }
-
-    // Separate the operations into operator/operand tuples
-    const pairs = operationsToPairs(operations);
-    for (let pair of pairs) {
-      const [ operator, operand ] = pair;
-      applyOperation(propertyName, operator, operand, builder);
-    }
-  };
-
-  /**
-   * Apply a single operation on a single property
-   * @param {String} property The property name e.g. "cities.name"
-   * @param {String} operator The operator e.g. "$in"
-   * @param {Any} operand The operand value e.g. "NZ"
-   * @param {QueryBuilder} builder The objection query builder
-   */
-  const applyOperation = (property, operator, operand, builder) => {
-    const operatorHandler = allOperators[operator];
-    if (!operatorHandler) return;
-
-    operatorHandler(property, operand, builder);
-  };
-
-  return {
-    applyOperations: applyLogicalExpression,
-    handleProperty: handleProperty,
-    applyEagerObject: applyEagerObject
-  };
+  return { applyPropertyExpression };
 };

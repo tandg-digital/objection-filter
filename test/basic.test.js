@@ -173,7 +173,7 @@ describe('basic filters', function () {
             .catch(done);
         });
 
-        it('should filter eagerly loaded data using `join`', done => {
+        it('should filter eagerly loaded 1-deep data using `join`', done => {
           buildFilter(Person)
             .build({
               eager: 'movies',
@@ -184,6 +184,22 @@ describe('basic filters', function () {
             .then(result => {
               result.length.should.equal(1);
               result[0].firstName.should.equal('F00');
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should filter eagerly loaded 2-deep data using `join`', done => {
+          buildFilter(Person)
+            .build({
+              eager: 'movies',
+              require: {
+                'parent.movies.name': 'M99'
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              result[0].firstName.should.equal('F01');
               done();
             })
             .catch(done);
