@@ -27,6 +27,7 @@ module.exports = {
     return session.knex.schema
       .dropTableIfExists('Person_Movie')
       .dropTableIfExists('Movie')
+      .dropTableIfExists('Category')
       .dropTableIfExists('Animal')
       .dropTableIfExists('Person');
   },
@@ -79,8 +80,10 @@ module.exports = {
    *   Each person is an actor in 10 Movies `M00`, `M01`, `M02`, ...
    *     First person has movies 0 - 9, second 10 - 19 etc.
    *
+   *   Each movie has a category C00 to C90 (i.e. 10 categories)
+   *
    * name    | parent  | pets      | movies
-   * --------+---------+-----------+----------
+   * --------+---------+-----------+-----------
    * F00 L09 | null    | P00 - P09 | M99 - M90
    * F01 L08 | F00 L09 | P10 - P19 | M89 - M80
    * F02 L07 | F01 L08 | P20 - P29 | M79 - M79
@@ -119,7 +122,7 @@ module.exports = {
           return {
             id: id,
             name: 'M' + zeroPad(P * M - id),
-            code: p <= 4 ? null : ('C' + zeroPad(p))
+            code: p <= 4 ? null : ('C' + zeroPad(p)),
           };
         }),
 

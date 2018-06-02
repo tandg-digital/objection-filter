@@ -21,24 +21,13 @@ const sliceRelation = (relatedProperty, delimiter = '.') => {
 
   // Nested relations need to be in the format a:b:c.name
   // https://github.com/Vincit/objection.js/issues/363
-  const fullyQualifiedProperty = `${relationName.replace(/\./g, ':')}.${propertyName}`;
+  const fullyQualifiedProperty = relationName ?
+    `${relationName.replace(/\./g, ':')}.${propertyName}` :
+    propertyName;
 
   return { propertyName, relationName, fullyQualifiedProperty };
 };
 module.exports.sliceRelation = sliceRelation;
-
-/**
- * Takes an operations expression and transforms it into an
- * array of operation-operand pairs e.g. { "$like": "a", "$contains": "b" } =>
- * [ [ "$like", "a"], [ "$contains", "b" ] ]
- * @param {Object} expression
- */
-const operationsToPairs = expression => {
-  // If the andExpression is NOT an object, it is an equality
-  return typeof expression === 'object' ?
-    (_.toPairs(expression) || []) :
-    [ [ '=', expression ] ];
-};
 
 /**
  * Create operation application utilities with some custom options
@@ -103,7 +92,7 @@ module.exports.Operations = function(options = {}) {
    */
   const applyPropertyExpression = function(
     propertyName,
-    expression = {},
+    expression,
     builder
   ) {
     debug(

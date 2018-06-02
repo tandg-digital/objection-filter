@@ -24,7 +24,10 @@ const {
 const {
   createRelationExpression
 } = require('./ExpressionBuilder');
-const { iterateLogicalExpression } = require('./LogicalIterator');
+const {
+  iterateLogicalExpression,
+  getPropertiesFromExpression
+} = require('./LogicalIterator');
 
 module.exports = class FilterQueryBuilder {
   /**
@@ -92,13 +95,11 @@ module.exports = class FilterQueryBuilder {
  */
 const applyEagerFilter = function(expression = {}, builder, path = [], utils = {}) {
   const { applyPropertyExpression } = utils;
-  // Transform column e.g. "Movies"."name" rather than "name"
   const applyLogicalExpression = iterateLogicalExpression({
     onExit: applyPropertyExpression,
     onLiteral: function() {
       throw new Error('Filter is invalid');
-    },
-    propertyTransform: (p, _builder) => [_builder._modelClass.name, p].join('.')
+    }
   });
 
   // Walk the eager tree
@@ -120,7 +121,12 @@ const applyEagerFilter = function(expression = {}, builder, path = [], utils = {
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
       builder.modifyEager(relationExpression, subQueryBuilder => {
-        applyLogicalExpression(filterCopy, subQueryBuilder);
+        // For eagers, the column name should be prefixed with the table name
+        const prefixTableName = function(name) {
+          return [subQueryBuilder._modelClass.name, name].join('.')
+        };
+
+        applyLogicalExpression(filterCopy, subQueryBuilder, false, prefixTableName);
       });
 
       delete rhs.$filter;
@@ -149,6 +155,15 @@ const applyEager = function (eager, builder, utils = {}) {
 module.exports.applyEager = applyEager;
 
 /**
+ * Test if a property is a related property
+ * e.g. "name" => false, "movies.name" => true
+ * @param {String} name
+ */
+const isRelatedProperty = function(name) {
+  return !!sliceRelation(name).relationName;
+};
+
+/**
  * Apply an entire require expression to the query builder
  * e.g. { "prop1": { "$like": "A" }, "prop2": { "$in": [1] } }
  * Do a first pass on the fields to create an objectionjs RelationExpression
@@ -158,16 +173,23 @@ module.exports.applyEager = applyEager;
  */
 const applyRequire = function (filter = {}, builder, utils = {}) {
   const { applyPropertyExpression } = utils;
-  // Transform columns to aliased name e.g. movies.person.name => movies:person.name
+
   const applyLogicalExpression = iterateLogicalExpression({
-    onExit: applyPropertyExpression,
-    onLiteral: function(operator, value, builder) {
-      throw new Error('Filter is invalid');
+    onExit: function(propertyName, value, _builder) {
+      // Do a where on the root model if the property isn't on a joined model
+      if (!isRelatedProperty(propertyName)) {
+        return applyPropertyExpression(propertyName, value, _builder);
+      }
+      applyPropertyExpression(propertyName, value, _builder);
     },
-    propertyTransform: p => sliceRelation(p).fullyQualifiedProperty
+    onLiteral: function() {
+      throw new Error('Filter is invalid');
+    }
   });
+  const getFullyQualifiedName = name => sliceRelation(name).fullyQualifiedProperty;
 
   if (Object.keys(filter).length === 0) return builder;
+
   const Model = builder._modelClass;
   const idColumn = `${Model.tableName}.${Model.idColumn}`;
 
@@ -175,18 +197,20 @@ const applyRequire = function (filter = {}, builder, utils = {}) {
     .query()
     .distinct(idColumn);
 
-  const propertiesSet = applyLogicalExpression(
-    filter,
-    filterQuery,
-    false,
-    p => sliceRelation(p).fullyQualifiedProperty
-  );
+  applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
+
+  // Get any related properties from the
+  const propertiesSet = getPropertiesFromExpression(filter, isRelatedProperty);
+
+  // TODO: Ideally don't even join onto the filter query if there are no properties
+  // if (propertiesSet.length === 0) {
+  //   return builder;
+  // }
 
   // If there weren't any related properties, don't bother joining
-  if (propertiesSet.length === 0)
-    return builder;
-
-  filterQuery.joinRelation(createRelationExpression(propertiesSet));
+  const joinRelation = createRelationExpression(propertiesSet);
+  if (joinRelation)
+    filterQuery.joinRelation(createRelationExpression(propertiesSet));
 
   const filterQueryAlias = 'filter_query';
   builder.innerJoin(
@@ -278,7 +302,6 @@ const selectFields = (fields = [], builder, relationName) => {
     eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder._modelClass.tableName}.${field}`));
   });
 };
-
 
 /**
  * Select a limited set of fields. Use dot notation to limit eagerly loaded models.

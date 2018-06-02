@@ -19,8 +19,9 @@ const arrayize = function(objectOrArray) {
 /**
  * Given a logical expression return an array of all properties
  * @param {Object} expression
+ * @param {Function} test A function to determine whether to include the property
  */
-const getPropertiesFromExpression = function(expression = {}) {
+const getPropertiesFromExpression = function(expression = {}, test = () => true) {
   let properties = [];
 
   for (let lhs in expression) {
@@ -30,7 +31,7 @@ const getPropertiesFromExpression = function(expression = {}) {
       for (let subExpression of arrayize(rhs))
         properties = properties.concat(getPropertiesFromExpression(subExpression));
     } else {
-      properties.push(lhs);
+      if (test(lhs)) properties.push(lhs);
     }
   }
 
@@ -53,14 +54,24 @@ const getPropertiesFromExpression = function(expression = {}) {
  * { $or: { a: 1, b: 2 } } - An object,  will be 'arrayized' into an array
  * @param {Function} onExit A function to call once a non-logical operator is hit
  * @param {Function} onLiteral A function to call if the provided input is a primitive
- * @param {Function} propertyTransform
  */
 const iterateLogicalExpression = function({
   onExit, // onExit(propertyOrOperator, value, builder)
   onLiteral, // onLiteral(value, builder)
-  propertyTransform = n => n
 }) {
-  const iterator = function(expression = {}, builder, or = false) {
+  /**
+   *
+   * @param {Object} expression
+   * @param {ObjecQueryBuilder} builder
+   * @param {Boolean} or
+   * @param {Function} propertyTransform A preOnExit transform for the property name
+   */
+  const iterator = function(
+    expression = {},
+    builder,
+    or = false,
+    propertyTransform = p => p
+  ) {
     debug('Iterating through', expression);
 
     builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
@@ -77,20 +88,19 @@ const iterateLogicalExpression = function({
             iterator(
               subExpression,
               subQueryBuilder,
-              lhs === OR
+              lhs === OR,
+              propertyTransform
             );
           }
         } else {
           // The lhs is either a non-logical operator or a property name
-          onExit(propertyTransform(lhs, builder), rhs, subQueryBuilder);
+          onExit(propertyTransform(lhs), rhs, subQueryBuilder);
         }
       }
     });
-
-    return getPropertiesFromExpression(expression);
   };
 
   return iterator;
 };
 
-module.exports = { iterateLogicalExpression };
+module.exports = { iterateLogicalExpression, getPropertiesFromExpression };

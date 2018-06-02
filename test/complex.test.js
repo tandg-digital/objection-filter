@@ -65,6 +65,29 @@ describe('complex filters', function () {
             })
             .catch(done);
         });
+
+        it('should be equivalent if require/where on a root model column', done => {
+          const requireQuery = buildFilter(Person)
+            .build({
+              require: {
+                firstName: 'F01'
+              }
+            });
+
+          const whereQuery = buildFilter(Person)
+            .build({
+              where: {
+                firstName: 'F01'
+              }
+            });
+
+          Promise.all([requireQuery, whereQuery])
+            .then(([results1, results2]) => {
+              results1.should.deep.equal(results2);
+              done();
+            })
+            .catch(done);
+        });
       });
 
       describe('comparative operators', function() {
@@ -208,6 +231,25 @@ describe('complex filters', function () {
               require: {
                 'movies.id': {
                   $equals: 98
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              const person = result[0];
+              person.firstName.should.equal('F09');
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should search related model using explicit `=`', done => {
+          buildFilter(Person)
+            .build({
+              eager: 'movies',
+              require: {
+                'movies.id': {
+                  '=': 98
                 }
               }
             })
