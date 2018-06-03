@@ -92,8 +92,10 @@ module.exports = class FilterQueryBuilder {
  * Apply an object notation eager object with scope based filtering
  * @param {Object} expression
  * @param {QueryBuilder} builder
+ * @param {Array<string>} path An array of the current relation
+ * @param {Object} utils
  */
-const applyEagerFilter = function(expression = {}, builder, path = [], utils) {
+const applyEagerFilter = function(expression = {}, builder, path, utils) {
   const { applyPropertyExpression } = utils;
   const applyLogicalExpression = iterateLogicalExpression({
     onExit: applyPropertyExpression,

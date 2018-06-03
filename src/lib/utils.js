@@ -32,9 +32,9 @@ module.exports.sliceRelation = sliceRelation;
 /**
  * Create operation application utilities with some custom options
  * If options.operators is specified
- * @param {Object} options
+ * @param {Object} options.operators
  */
-module.exports.Operations = function(options = {}) {
+module.exports.Operations = function(options) {
   const defaultOperators = {
     $like: (property, operand, builder) => builder
       .where(property, 'like', operand),

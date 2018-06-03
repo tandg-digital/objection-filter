@@ -29,13 +29,14 @@ const getPropertiesFromExpression = function(expression = {}, test = () => true)
 
     if ([OR, AND].includes(lhs)) {
       for (let subExpression of arrayize(rhs))
-        properties = properties.concat(getPropertiesFromExpression(subExpression));
+        properties = properties.concat(getPropertiesFromExpression(subExpression, test));
     } else {
-      if (test(lhs)) properties.push(lhs);
+      if (test(lhs))
+        properties.push(lhs);
     }
   }
 
-  return properties;
+  return _.uniq(properties);
 };
 
 /**
