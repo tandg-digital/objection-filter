@@ -122,9 +122,9 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
     const newPath = path.concat(eagerName);
     const relationExpression = newPath.join('.');
 
-    if (rhs.$filter) {
-      debug('modifyEager(', { relationExpression, filter: rhs.$filter }, ')');
-      const filterCopy = Object.assign({}, rhs.$filter);
+    if (rhs.$where) {
+      debug('modifyEager(', { relationExpression, filter: rhs.$where }, ')');
+      const filterCopy = Object.assign({}, rhs.$where);
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
       builder.modifyEager(relationExpression, subQueryBuilder => {
@@ -136,7 +136,7 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
         applyLogicalExpression(filterCopy, subQueryBuilder, false, prefixTableName);
       });
 
-      delete rhs.$filter;
+      delete rhs.$where;
 
       expression[lhs] = rhs;
     }

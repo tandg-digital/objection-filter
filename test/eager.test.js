@@ -32,17 +32,17 @@ describe('eager object notation', function () {
         return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
       });
 
-      describe('$filter on root model', function() {
+      describe('$where on root model', function() {
 
       });
 
-      describe('$filter on eager models', function() {
+      describe('$where on eager models', function() {
         it('should filter using a single condition', done => {
           buildFilter(Person)
             .build({
               eager: {
                 movies: {
-                  $filter: {
+                  $where: {
                     name: 'M99'
                   }
                 }
@@ -65,7 +65,7 @@ describe('eager object notation', function () {
             .build({
               eager: {
                 movies: {
-                  $filter: {
+                  $where: {
                     $or: [
                       { name: 'M99' },
                       { name: 'M98' }
@@ -91,7 +91,7 @@ describe('eager object notation', function () {
             .build({
               eager: {
                 movies: {
-                  $filter: {
+                  $where: {
                     $or: [
                       { name: 'M99' },
                       {
@@ -122,7 +122,7 @@ describe('eager object notation', function () {
               eager: {
                 parent: {
                   movies: {
-                    $filter: {
+                    $where: {
                       name: 'M99'
                     }
                   }
@@ -146,7 +146,7 @@ describe('eager object notation', function () {
             .build({
               eager: {
                 movies: {
-                  $filter: {
+                  $where: {
                     name: 'M99'
                   }
                 },
@@ -175,7 +175,7 @@ describe('eager object notation', function () {
               eager: {
                 favorites: {
                   $relation: 'movies',
-                  $filter: {
+                  $where: {
                     name: 'M99'
                   }
                 }
@@ -199,12 +199,12 @@ describe('eager object notation', function () {
               eager: {
                 upper: {
                   $relation: 'parent',
-                  $filter: {
+                  $where: {
                     firstName: 'F05'
                   },
                   favorites: {
                     $relation: 'movies',
-                    $filter: {
+                    $where: {
                       name: 'M49'
                     }
                   }
@@ -232,7 +232,7 @@ describe('eager object notation', function () {
             .build({
               eager: {
                movies: {
-                  $filter: {
+                  $where: {
                     $or: [1]
                   }
                 }
