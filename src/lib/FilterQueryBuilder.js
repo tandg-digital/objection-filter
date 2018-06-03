@@ -130,7 +130,7 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
       builder.modifyEager(relationExpression, subQueryBuilder => {
         // For eagers, the column name should be prefixed with the table name
         const prefixTableName = function(name) {
-          return [subQueryBuilder._modelClass.name, name].join('.')
+          return [subQueryBuilder._modelClass.tableName, name].join('.')
         };
 
         applyLogicalExpression(filterCopy, subQueryBuilder, false, prefixTableName);
