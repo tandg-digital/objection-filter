@@ -33,7 +33,22 @@ describe('eager object notation', function () {
       });
 
       describe('$where on root model', function() {
-
+        it('should filter on the root model', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  firstName: 'F01'
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              result[0].firstName.should.equal('F01');
+              done();
+            })
+            .catch(done);
+        });
       });
 
       describe('$where on eager models', function() {

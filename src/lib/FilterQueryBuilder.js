@@ -89,6 +89,14 @@ module.exports = class FilterQueryBuilder {
 };
 
 /**
+ * Given an input QueryBuilder, return a function which will prefix the
+ * table name of the model onto a target column name
+ * @param {QueryBuilder} builder
+ */
+const withTablePrefix = builder => name =>
+  [builder.modelClass().tableName, name].join('.');
+
+/**
  * Apply an object notation eager object with scope based filtering
  * @param {Object} expression
  * @param {QueryBuilder} builder
@@ -105,6 +113,13 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
   });
 
   debug('applyEagerFilter(', { expression, path }, ')');
+
+  // Apply a where on the root model
+  if (expression.$where) {
+    const filterCopy = Object.assign({}, expression.$where);
+    applyLogicalExpression(filterCopy, builder, false, withTablePrefix(builder));
+    delete expression.$where;
+  }
 
   // Walk the eager tree
   for (let lhs in expression) {
@@ -129,11 +144,12 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
       // TODO: Could potentially apply all 'modifyEagers' at the end
       builder.modifyEager(relationExpression, subQueryBuilder => {
         // For eagers, the column name should be prefixed with the table name
-        const prefixTableName = function(name) {
-          return [subQueryBuilder._modelClass.tableName, name].join('.')
-        };
-
-        applyLogicalExpression(filterCopy, subQueryBuilder, false, prefixTableName);
+        applyLogicalExpression(
+          filterCopy,
+          subQueryBuilder,
+          false,
+          withTablePrefix(subQueryBuilder)
+        );
       });
 
       delete rhs.$where;
@@ -193,7 +209,7 @@ const applyRequire = function (filter = {}, builder, utils) {
 
   if (Object.keys(filter).length === 0) return builder;
 
-  const Model = builder._modelClass;
+  const Model = builder.modelClass();
   const idColumn = `${Model.tableName}.${Model.idColumn}`;
 
   const filterQuery = Model
@@ -236,7 +252,7 @@ module.exports.applyRequire = applyRequire;
  */
 const applyWhere = function (filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
-  const Model = builder._modelClass;
+  const Model = builder.modelClass();
 
   _.forEach(filter, (andExpression, property) => {
     const { relationName, propertyName } = sliceRelation(property);
@@ -249,7 +265,7 @@ const applyWhere = function (filter = {}, builder, utils) {
 
     // Eager query fields should include the eager model table name
     builder.modifyEager(relationName, eagerBuilder => {
-      const fullyQualifiedProperty = `${eagerBuilder._modelClass.tableName}.${propertyName}`;
+      const fullyQualifiedProperty = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
       applyPropertyExpression(fullyQualifiedProperty, andExpression, eagerBuilder);
     });
   });
@@ -267,7 +283,7 @@ module.exports.applyWhere = applyWhere;
  */
 const applyOrder = function (order, builder) {
   if (!order) return;
-  const Model = builder._modelClass;
+  const Model = builder.modelClass();
 
   order.split(',').forEach(orderStatement => {
     const [orderProperty, direction = 'asc'] = orderStatement.split(' ');
@@ -281,7 +297,7 @@ const applyOrder = function (order, builder) {
 
     // For now, only allow sub-query ordering of eager expressions
     builder.modifyEager(relationName, eagerBuilder => {
-      const fullyQualifiedColumn = `${eagerBuilder._modelClass.tableName}.${propertyName}`;
+      const fullyQualifiedColumn = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
       eagerBuilder.orderBy(fullyQualifiedColumn, direction);
     });
   });
@@ -302,7 +318,7 @@ const selectFields = (fields = [], builder, relationName) => {
     return builder.select(fields);
 
   builder.modifyEager(relationName, eagerQueryBuilder => {
-    eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder._modelClass.tableName}.${field}`));
+    eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
   });
 };
 
@@ -312,7 +328,7 @@ const selectFields = (fields = [], builder, relationName) => {
  * @param {QueryBuilder} builder The root query builder
  */
 const applyFields = function (fields = [], builder) {
-  const Model = builder._modelClass;
+  const Model = builder.modelClass();
 
   // Group fields by relation e.g. ["a.b.name", "a.b.id"] => {"a.b": ["name", "id"]}
   const rootFields = []; // Fields on the root model
