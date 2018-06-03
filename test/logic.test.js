@@ -151,11 +151,13 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$and': [
+                $and: [
                   { 'movies.name': 'M00' },
-                  { '$and': [
-                    { 'movies.code': 'C09' }
-                  ] }
+                  {
+                    $and: [
+                      { 'movies.code': 'C09' }
+                    ]
+                  }
                 ]
               }
             })
@@ -182,6 +184,106 @@ describe('logical expression filters', function () {
               result.length.should.equal(1);
               const names = result.map(person => person.firstName);
               names.should.deep.equal(['F09']);
+              done();
+            })
+            .catch(done);
+        });
+      });
+
+      describe('require using combinations of $or/$and', function() {
+        it('should filter using top level $and with nested $or', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                $and: [
+                  {
+                    $or: [
+                      { firstName: 'F00' },
+                      { firstName: 'F01' }
+                    ]
+                  },
+                  { id: { $gt: 0 } }
+                ]
+              }
+            })
+            .then(result => {
+              result.length.should.equal(2);
+              const names = result.map(person => person.firstName);
+              names.should.deep.equal(['F00', 'F01']);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should filter using top level $or with nested $and', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                $or: [
+                  {
+                    $and: [
+                      { firstName: 'F00' },
+                      { id: { $gt: 0 } }
+                    ]
+                  },
+                  {
+                    $and: [
+                      { firstName: 'F01' },
+                      { id: { $gt: 0 } }
+                    ]
+                  },
+                ]
+              }
+            })
+            .then(result => {
+              result.length.should.equal(2);
+              const names = result.map(person => person.firstName);
+              names.should.deep.equal(['F00', 'F01']);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should filter using adjacent $and with $or', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                $and: [
+                  { firstName: 'F00' },
+                  { id: 1 }
+                ],
+                $or: [
+                  { lastName: 'L09' },
+                  { lastName: 'L08' }
+                ]
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              const names = result.map(person => person.firstName);
+              names.should.deep.equal(['F00']);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should ensure end of expression $or is scoped', done => {
+          // Should generate WHERE "firstName" = 'F01' AND ( ( ... ) OR ( ... ) )
+          // not "firstName" = 'F01' OR ( ... ) OR ( ... )
+          buildFilter(Person)
+            .build({
+              require: {
+                firstName: 'F00',
+                $or: [
+                  { lastName: 'L09' },
+                  { lastName: 'L08' }
+                ]
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              const names = result.map(person => person.firstName);
+              names.should.deep.equal(['F00']);
               done();
             })
             .catch(done);

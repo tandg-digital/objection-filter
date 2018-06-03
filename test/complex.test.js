@@ -224,6 +224,25 @@ describe('complex filters', function () {
             .catch(done);
         });
 
+        it('should search related model using !$exists', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                'movies.code': {
+                  $exists: false
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(5);
+              result.map(item => item.firstName).should.deep.equal([
+                'F00','F01','F02','F03','F04'
+              ]);
+              done();
+            })
+            .catch(done);
+        });
+
         it('should search related model using explicit $equals', done => {
           buildFilter(Person)
             .build({

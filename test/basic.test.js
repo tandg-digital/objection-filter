@@ -105,6 +105,21 @@ describe('basic filters', function () {
             })
             .catch(done);
         });
+
+        it('should order by implicit ascending', done => {
+          buildFilter(Person)
+            .build({
+              order: 'id'
+            })
+            .then(result => {
+              result.should.be.an.an('array')
+              result.map(item => item.id).should.deep.equal([
+                1,2,3,4,5,6,7,8,9,10
+              ]);
+              done();
+            })
+            .catch(done);
+        });
       });
 
       describe('eager loaded data', function() {

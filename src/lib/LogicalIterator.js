@@ -67,7 +67,7 @@ const iterateLogicalExpression = function({
    * @param {Function} propertyTransform A preOnExit transform for the property name
    */
   const iterator = function(
-    expression = {},
+    expression,
     builder,
     or = false,
     propertyTransform = p => p
@@ -84,14 +84,17 @@ const iterateLogicalExpression = function({
         debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
         if ([OR, AND].includes(lhs)) {
-          for (let subExpression of arrayize(rhs)) {
-            iterator(
-              subExpression,
-              subQueryBuilder,
-              lhs === OR,
-              propertyTransform
-            );
-          }
+          // Wrap nested conditions in their own scope
+          subQueryBuilder.where(innerBuilder => {
+            for (let subExpression of arrayize(rhs)) {
+              iterator(
+                subExpression,
+                innerBuilder,
+                lhs === OR,
+                propertyTransform
+              );
+            }
+          });
         } else {
           // The lhs is either a non-logical operator or a property name
           onExit(propertyTransform(lhs), rhs, subQueryBuilder);

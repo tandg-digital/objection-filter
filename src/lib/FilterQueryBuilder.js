@@ -146,7 +146,7 @@ const applyEagerFilter = function(expression = {}, builder, path = [], utils) {
   return expression;
 };
 
-const applyEagerObject = function(expression = {}, builder, utils) {
+const applyEagerObject = function(expression, builder, utils) {
   const expressionWithoutFilters = applyEagerFilter(expression, builder, [], utils);
   builder.eager(expressionWithoutFilters);
 };
