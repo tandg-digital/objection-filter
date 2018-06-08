@@ -15,6 +15,8 @@ The benefit of having filters is exposing them through an API. ORMs usually prov
 
 `npm i objection-filter --save`
 
+> objection-filter >= 1.0.0 is fully backwards compatible with older queries, but now supports nested [and/or filtering](#logical-expressions) as well as the new objection.js object notation. The 1.0.0 denotation was used due to these changes and the range of query combinations possible.
+
 # Usage
 
 The filtering library can be applied onto every _findAll_ REST endpoint e.g. `GET /api/{Model}?filter={"limit": 1}`
