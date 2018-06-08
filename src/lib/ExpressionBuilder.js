@@ -10,7 +10,7 @@ const {
  * @param {Object} tree A tree of relations
  * @param {String} relationName The top level relation
  */
-const toRelationSubExpression = (tree = {}, relationName) => {
+const toRelationSubExpression = (tree, relationName) => {
   if (Object.keys(tree).length === 0) return relationName;
 
   // Recursively apply to all attributes

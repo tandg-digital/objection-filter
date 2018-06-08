@@ -15,6 +15,8 @@ The benefit of having filters is exposing them through an API. ORMs usually prov
 
 `npm i objection-filter --save`
 
+> objection-filter >= 1.0.0 is fully backwards compatible with older queries, but now supports nested [and/or filtering](#logical-expressions) as well as the new objection.js object notation. The 1.0.0 denotation was used due to these changes and the range of query combinations possible.
+
 # Usage
 
 The filtering library can be applied onto every _findAll_ REST endpoint e.g. `GET /api/{Model}?filter={"limit": 1}`
@@ -156,6 +158,77 @@ An example of operator usage
 
 All operators can be used with `where` to filter the root model or eagerly loaded models, or with `require` to filter the root model based on related models.
 
+#### Logical Expressions
+Logical expressions can be applied to both the `eager`, `where` and `require` helpers. The `where` operator will eventually be deprecated and replaced by the new `eager` [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation) in objection.js.
+
+##### Examples using `require`
+The `require` expression is used to "filter the root model based on related models". Given this, related fields between models can be mixed anywhere in the logical expression.
+
+```
+{
+  "require": {
+    "$or": [
+      { "city.country.name": "Australia" },
+      { "city.code": "09" }
+    ]
+  }
+}
+```
+
+Logical expressions can also be nested
+```
+{
+  "require": {
+    "$and": {
+      "name": "John",
+      "$or": [
+        { "city.country.name": "Australia" },
+        { "city.code": { "$like": "01" } }
+      ]
+    }
+  }
+}
+```
+
+Note that in these examples, all logical expressions come _before_ the property name. However, logical expressions can also come _after_ the property name.
+
+```
+{
+  "require": {
+    "$or": [
+      { "city.country.name": "Australia" },
+      {
+        "city.code": {
+          "$or": [
+            { "$equals": "12" },
+            { "$like": "13" }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+##### Examples using `eager`
+Exsting `eager` expressions will continue to work as expected, and can be combined with the top level `where` to achieve the same result as the [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation).
+
+Logical expressions using eager object notation use the `$where` keyword. An example of this is:
+```
+{
+  "city": {
+    "$where": {
+      "$or": [
+        { "name": "Auckland" },
+        { "name": "Sydney" }
+      ]
+    }
+  }
+}
+```
+
+The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". Since the `$where` will only apply to the current level of relation, trying to access related fields e.g. "country.name" will not work.
+
 #### Custom Operators
 
 If the built in filter operators aren't quite enough, custom operators can be added. A common use case for this may be to add a `lower case string comparison` operator, which may vary in implementation depending on the SQL dialect.
@@ -166,9 +239,9 @@ Example:
 const options = {
   operators: {
     $equalsLower: (property, operand, builder) =>
-      builder.whereRaw('LOWER(??) = ?', [
+      builder.whereRaw('LOWER(??) = LOWER(?)', [
         property,
-        operand.toLowerCase()
+        operand
       ])
   }
 };

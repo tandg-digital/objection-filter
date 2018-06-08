@@ -28,31 +28,6 @@ describe('complex filters', function () {
         return testUtils.createDb(session);
       });
 
-      /**
-       * Insert the test data.
-       *
-       * 10 Persons with names `F00 L09`, `F01 L08`, ...
-       *   The previous person is the parent of the next one (the first person doesn't have a parent).
-       *
-       *   Each person has 10 Pets `P00`, `P01`, `P02`, ...
-       *     First person has pets 0 - 9, second 10 - 19 etc.
-       *
-       *   Each person is an actor in 10 Movies `M00`, `M01`, `M02`, ...
-       *     First person has movies 0 - 9, second 10 - 19 etc.
-       *
-       * name    | parent  | pets      | movies
-       * --------+---------+-----------+----------
-       * F00 L09 | null    | P00 - P09 | M99 - M90
-       * F01 L08 | F00 L09 | P10 - P19 | M89 - M80
-       * F02 L07 | F01 L08 | P20 - P29 | M79 - M79
-       * F03 L06 | F02 L07 | P30 - P39 | M69 - M60
-       * F04 L05 | F03 L06 | P40 - P49 | M59 - M50
-       * F05 L04 | F04 L05 | P50 - P59 | M49 - M40
-       * F06 L03 | F05 L04 | P60 - P69 | M39 - M30
-       * F07 L02 | F06 L03 | P70 - P79 | M29 - M20
-       * F08 L01 | F07 L02 | P80 - P89 | M19 - M10
-       * F09 L00 | F08 L01 | P90 - P99 | M09 - M00
-       */
       before(function () {
         return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
       });
@@ -86,6 +61,29 @@ describe('complex filters', function () {
               result.map(item => item.firstName).should.deep.equal([
                 'F00','F01','F02','F03','F04','F05','F06','F07','F08','F09'
               ]);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should be equivalent if require/where on a root model column', done => {
+          const requireQuery = buildFilter(Person)
+            .build({
+              require: {
+                firstName: 'F01'
+              }
+            });
+
+          const whereQuery = buildFilter(Person)
+            .build({
+              where: {
+                firstName: 'F01'
+              }
+            });
+
+          Promise.all([requireQuery, whereQuery])
+            .then(([results1, results2]) => {
+              results1.should.deep.equal(results2);
               done();
             })
             .catch(done);
@@ -226,6 +224,25 @@ describe('complex filters', function () {
             .catch(done);
         });
 
+        it('should search related model using !$exists', done => {
+          buildFilter(Person)
+            .build({
+              require: {
+                'movies.code': {
+                  $exists: false
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(5);
+              result.map(item => item.firstName).should.deep.equal([
+                'F00','F01','F02','F03','F04'
+              ]);
+              done();
+            })
+            .catch(done);
+        });
+
         it('should search related model using explicit $equals', done => {
           buildFilter(Person)
             .build({
@@ -233,6 +250,25 @@ describe('complex filters', function () {
               require: {
                 'movies.id': {
                   $equals: 98
+                }
+              }
+            })
+            .then(result => {
+              result.length.should.equal(1);
+              const person = result[0];
+              person.firstName.should.equal('F09');
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should search related model using explicit `=`', done => {
+          buildFilter(Person)
+            .build({
+              eager: 'movies',
+              require: {
+                'movies.id': {
+                  '=': 98
                 }
               }
             })
@@ -398,24 +434,6 @@ describe('complex filters', function () {
               done();
             })
             .catch(done);
-        });
-
-        it('should be equivalent with `require` and `where` on base model', () => {
-          const requireQuery = buildFilter(Person)
-            .build({
-              require: {
-                firstName: 'F09'
-              }
-            });
-
-          const whereQuery = buildFilter(Person)
-            .build({
-              where: {
-                firstName: 'F09'
-              }
-            });
-
-          requireQuery.toSql().should.equal(whereQuery.toSql());
         });
       });
     });

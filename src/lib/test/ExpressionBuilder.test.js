@@ -5,7 +5,7 @@ require('chai').should();
 const expect = require('chai').expect;
 const {
   createRelationExpression
-} = require('../src/lib/ExpressionBuilder');
+} = require('../ExpressionBuilder');
 
 describe('utilities and helpers', function () {
   describe('createRelationExpression', () => {

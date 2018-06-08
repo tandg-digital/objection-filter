@@ -27,13 +27,14 @@ module.exports = {
     return session.knex.schema
       .dropTableIfExists('Person_Movie')
       .dropTableIfExists('Movie')
+      .dropTableIfExists('Category')
       .dropTableIfExists('Animal')
       .dropTableIfExists('Person');
   },
 
   createDb: function (session) {
     return session.knex.schema
-      .createTableIfNotExists('Person', function (table) {
+      .createTable('Person', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.integer('age');
         table.biginteger('pid').unsigned().references('Person.id').index();
@@ -41,17 +42,17 @@ module.exports = {
         table.string('lastName');
         table.string('nickName');
       })
-      .createTableIfNotExists('Animal', function (table) {
+      .createTable('Animal', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('ownerId').unsigned().references('Person.id').index();
         table.string('name').index();
       })
-      .createTableIfNotExists('Movie', function (table) {
+      .createTable('Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.string('name').index();
         table.string('code');
       })
-      .createTableIfNotExists('Person_Movie', function (table) {
+      .createTable('Person_Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('actorId').unsigned().references('Person.id').index();
         table.biginteger('movieId').unsigned().references('Movie.id').index();
@@ -67,6 +68,33 @@ module.exports = {
       })
   },
 
+  /**
+   * Insert the test data.
+   *
+   * 10 Persons with names `F00 L09`, `F01 L08`, ...
+   *   The previous person is the parent of the next one (the first person doesn't have a parent).
+   *
+   *   Each person has 10 Pets `P00`, `P01`, `P02`, ...
+   *     First person has pets 0 - 9, second 10 - 19 etc.
+   *
+   *   Each person is an actor in 10 Movies `M00`, `M01`, `M02`, ...
+   *     First person has movies 0 - 9, second 10 - 19 etc.
+   *
+   *   Each movie has a category C00 to C90 (i.e. 10 categories)
+   *
+   * name    | parent  | pets      | movies
+   * --------+---------+-----------+-----------
+   * F00 L09 | null    | P00 - P09 | M99 - M90
+   * F01 L08 | F00 L09 | P10 - P19 | M89 - M80
+   * F02 L07 | F01 L08 | P20 - P29 | M79 - M79
+   * F03 L06 | F02 L07 | P30 - P39 | M69 - M60
+   * F04 L05 | F03 L06 | P40 - P49 | M59 - M50
+   * F05 L04 | F04 L05 | P50 - P59 | M49 - M40
+   * F06 L03 | F05 L04 | P60 - P69 | M39 - M30
+   * F07 L02 | F06 L03 | P70 - P79 | M29 - M20
+   * F08 L01 | F07 L02 | P80 - P89 | M19 - M10
+   * F09 L00 | F08 L01 | P90 - P99 | M09 - M00
+   */
   insertData: function (session, counts, progress) {
     progress = progress || _.noop;
 
@@ -94,7 +122,7 @@ module.exports = {
           return {
             id: id,
             name: 'M' + zeroPad(P * M - id),
-            code: p <= 4 ? null : ('C' + zeroPad(p))
+            code: p <= 4 ? null : ('C' + zeroPad(p)),
           };
         }),
 
