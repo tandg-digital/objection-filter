@@ -61,7 +61,6 @@ module.exports.Operations = function(options) {
      * @param {QueryBuilder} builder
      */
     $or: (property, items, builder) => {
-      // Any $or after a property has been locked can still be nested with other $or's
       const onExit = function(operator, value, subQueryBuilder) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
@@ -73,9 +72,27 @@ module.exports.Operations = function(options) {
       // Iterate the logical expression until it hits an operation e.g. $gte
       const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
 
-      // Wrap within another builder context to prevent orWhere at ends
+      // Wrap within another builder context to prevent end-of-expression errors
+      // TODO: Investigate the consequences of not using this wrapper
       return builder.where(subQueryBuilder => {
         iterateLogical({ $or: items }, subQueryBuilder, true);
+      });
+    },
+    $and: (property, items, builder) => {
+      const onExit = function(operator, value, subQueryBuilder) {
+        const operationHandler = allOperators[operator];
+        operationHandler(property, value, subQueryBuilder);
+      };
+      const onLiteral = function(value, subQueryBuilder) {
+        onExit('$equals', value, subQueryBuilder);
+      };
+
+      // Iterate the logical expression until it hits an operation e.g. $gte
+      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+
+      // Wrap within another builder context to prevent end-of-expression errors
+      return builder.where(subQueryBuilder => {
+        iterateLogical({ $and: items }, subQueryBuilder, false);
       });
     }
   };

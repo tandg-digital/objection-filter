@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/tandg-digital/objection-filter/badge.svg?branch=master&service=github)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
+[![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
 
 # objection-filter
 objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It was originally based on [objection-find](https://github.com/Vincit/objection-find), but has since moved in a different direction. It aims to fulfil some requirements that occur often during API development:
@@ -49,7 +49,7 @@ Available filter properties include:
   // Properties to filter by on the related models themselves
   "eager": {
     "$where": { // Top level $where filters on the root model
-      "firstName": "John",
+      "firstName": "John"
     },
     "orders": {
       "$where": {
