@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/tandg-digital/objection-filter/badge.svg?branch=master&service=github)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
+[![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
 
 # objection-filter
 objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It was originally based on [objection-find](https://github.com/Vincit/objection-find), but has since moved in a different direction. It aims to fulfil some requirements that occur often during API development:
@@ -6,10 +6,13 @@ objection-filter is a filtering module for the [objection.js](https://github.com
 ##### 1. Filtering on nested relations
 For example, if you have the models _Customer_ belongsTo _City_ belongsTo _Country_, we can query all _Customers_ where the _Country_ starts with `A`.
 
-This also means that row-based multi-tenancy or data slicing is easy, since the query is essentially "find me instances of `Model` where `path.to.tenantId = TENANT_ID`".
+##### 2. Eagerly loading data
+Eagerly load a bunch of related data in a single query. This is useful for getting a list models e.g. _Customers_ then including all their _Orders_ in the same query.
 
-##### 2. Controlled exposure through a REST API
-The benefit of having filters is exposing them through an API. ORMs usually provide powerful filtering which would not be suitable for public exposure. The filtering capability in this module is designed to be exposed rather than only used on the back-end.
+# Shortcuts
+
+* [Changelog](doc/CHANGELOG.md)
+* [Recipes](doc/RECIPES.md)
 
 # Installation
 
@@ -38,83 +41,41 @@ Available filter properties include:
 ```js
 // GET /api/Customers
 {
-  // Properties on eagerly loaded models to filter by, but still show all root models
-  "where": { "id": 2 },
   // Properties on related models which are required to show the root model
-  "require": { "relatedModel.parentModel.otherModel.name": "test" },
-  // An objection.js eager expression
-  "eager": "relatedModel",
+  "require": {
+    "profile.isActivated": true,
+    "city.country": { "$like": "A" }
+  },
+  // Properties to filter by on the related models themselves
+  "eager": {
+    "$where": { // Top level $where filters on the root model
+      "firstName": "John"
+    },
+    "orders": {
+      "$where": {
+        "isComplete": true
+      },
+      "products": {
+        "$where": {
+          "cost": { "$lt": 100 }
+        }
+      }
+    }
+  },
   // An objection.js order by expression
-  "order": "name desc",
+  "order": "firstName desc",
   "limit": 10,
   "offset": 10,
   // An array of dot notation fields to select on the root model and eagerly loaded models
-  "fields": ["id", "relatedModel.name"]
+  "fields": ["firstName", "lastName", "orders.code", "products.name"]
 }
 ```
 
-# Example queries
+> There `where` operator from < v1.0.0 is still available and can be combined with the `eager` string type notation. However, it's recommended to use eager object notation as in the `eager` property above.
 
-Here are some example queries to perform common operations.
+# Filter Operators
 
-#### Only show me customers where their country contains "Fr"
-For models _Customer_ belongsTo _City_ belongsTo _Country_
-```json
-{
-  "require": {
-    "cities.countries.name": {
-      "$like": "Fr"
-    }
-  }
-}
-```
-
-This will result in a dataset like the following
-```json
-[
-  {
-    "id": 123,
-    "firstName": "John",
-    "lastName": "Smith"
-  }
-]
-```
-
-The `require` attribute will not automatically include related models. This allows for filtering based on one relation, but then using `eager` to include a different set of relations, and `where` to filter on those relations.
-
-#### Show me customers with a last name "Smith" but only show me their orders which are complete
-For models _Customer_ hasMany _Order_
-```json
-{
-  "where": {
-    "lastName": "Smith",
-    "orders.status": "COMPLETE"
-  },
-  "eager": "[orders]"
-}
-```
-
-This will result in a dataset like the following
-```json
-[
-  {
-    "id": 123,
-    "firstName": "John",
-    "lastName": "Smith",
-    "orders": [{"id": 1, "status": "COMPLETE"}]
-  },
-  {
-    "id": 234,
-    "firstName": "Jane",
-    "lastName": "Smith",
-    "orders: [] // Still shows the customer even though no orders exist that are complete
-  }
-]
-```
-
-#### Filter Operators
-
-There are a limited number of operations that can be used within the filter syntax. These include:
+There are a number of built-in operations that can be applied to columns (custom ones can also be created). These include:
 
 1. **$like** - The SQL _LIKE_ operator, can be used with expressions such as _ab%_ to search for strings that start with _ab_
 2. **$gt/$lt/$gte/$lte** - Greater than and Less than operators for numerical fields
@@ -128,7 +89,7 @@ There are a limited number of operations that can be used within the filter synt
 An example of operator usage
 ```json
 {
-  "where": {
+  "require": {
     "property0": "Exactly Equals",
     "property1": {
       "$equals": 5
@@ -156,15 +117,13 @@ An example of operator usage
 }
 ```
 
-All operators can be used with `where` to filter the root model or eagerly loaded models, or with `require` to filter the root model based on related models.
-
-#### Logical Expressions
-Logical expressions can be applied to both the `eager`, `where` and `require` helpers. The `where` operator will eventually be deprecated and replaced by the new `eager` [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation) in objection.js.
+# Logical Expressions
+Logical expressions can be applied to both the `eager` and `require` helpers. The `where` top level operator will eventually be deprecated and replaced by the new `eager` [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation) in objection.js.
 
 ##### Examples using `require`
 The `require` expression is used to "filter the root model based on related models". Given this, related fields between models can be mixed anywhere in the logical expression.
 
-```
+```json
 {
   "require": {
     "$or": [
@@ -176,7 +135,7 @@ The `require` expression is used to "filter the root model based on related mode
 ```
 
 Logical expressions can also be nested
-```
+```json
 {
   "require": {
     "$and": {
@@ -192,7 +151,7 @@ Logical expressions can also be nested
 
 Note that in these examples, all logical expressions come _before_ the property name. However, logical expressions can also come _after_ the property name.
 
-```
+```json
 {
   "require": {
     "$or": [
@@ -214,7 +173,7 @@ Note that in these examples, all logical expressions come _before_ the property 
 Exsting `eager` expressions will continue to work as expected, and can be combined with the top level `where` to achieve the same result as the [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation).
 
 Logical expressions using eager object notation use the `$where` keyword. An example of this is:
-```
+```json
 {
   "city": {
     "$where": {
@@ -229,7 +188,7 @@ Logical expressions using eager object notation use the `$where` keyword. An exa
 
 The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". Since the `$where` will only apply to the current level of relation, trying to access related fields e.g. "country.name" will not work.
 
-#### Custom Operators
+# Custom Operators
 
 If the built in filter operators aren't quite enough, custom operators can be added. A common use case for this may be to add a `lower case string comparison` operator, which may vary in implementation depending on the SQL dialect.
 
@@ -239,17 +198,16 @@ Example:
 const options = {
   operators: {
     $equalsLower: (property, operand, builder) =>
-      builder.whereRaw('LOWER(??) = LOWER(?)', [
-        property,
-        operand
-      ])
+      builder.whereRaw('LOWER(??) = LOWER(?)', [property, operand])
   }
 };
 
 buildFilter(Person, null, options)
   .build({
-    where: {
-      firstName: { $equalsLower: 'john' }
+    eager: {
+      $where: {
+        firstName: { $equalsLower: 'John' }
+      }
     }
   })
 ```

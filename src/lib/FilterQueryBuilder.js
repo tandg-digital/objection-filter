@@ -117,7 +117,7 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
   // Apply a where on the root model
   if (expression.$where) {
     const filterCopy = Object.assign({}, expression.$where);
-    applyLogicalExpression(filterCopy, builder, false, withTablePrefix(builder));
+    applyRequire(filterCopy, builder, utils);
     delete expression.$where;
   }
 
@@ -130,7 +130,6 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
       continue;
 
     // rhs is an object
-    const relationName = rhs.$relation ? rhs.$relation : lhs;
     const eagerName = rhs.$relation ? `${rhs.$relation} as ${lhs}` : lhs;
 
     // including aliases e.g. "a as b.c as d"
@@ -143,13 +142,7 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
       builder.modifyEager(relationExpression, subQueryBuilder => {
-        // For eagers, the column name should be prefixed with the table name
-        applyLogicalExpression(
-          filterCopy,
-          subQueryBuilder,
-          false,
-          withTablePrefix(subQueryBuilder)
-        );
+        applyRequire(filterCopy, subQueryBuilder, utils);
       });
 
       delete rhs.$where;
@@ -197,6 +190,11 @@ const isRelatedProperty = function(name) {
 const applyRequire = function (filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
 
+  // If there are no properties at all, just return
+  const propertiesSet = getPropertiesFromExpression(filter);
+  if (propertiesSet.length === 0)
+    return builder;
+
   const applyLogicalExpression = iterateLogicalExpression({
     onExit: function(propertyName, value, builder) {
       applyPropertyExpression(propertyName, value, builder);
@@ -207,36 +205,32 @@ const applyRequire = function (filter = {}, builder, utils) {
   });
   const getFullyQualifiedName = name => sliceRelation(name).fullyQualifiedProperty;
 
-  if (Object.keys(filter).length === 0) return builder;
-
   const Model = builder.modelClass();
   const idColumn = `${Model.tableName}.${Model.idColumn}`;
 
-  const filterQuery = Model
+  // TODO: If there are no related properties, don't join
+  const relatedPropertiesSet = propertiesSet.filter(isRelatedProperty);
+  if (relatedPropertiesSet.length === 0) {
+    applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
+  } else {
+    const filterQuery = Model
     .query()
     .distinct(idColumn);
 
-  applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
+    applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
 
-  // Get any related properties from the
-  const propertiesSet = getPropertiesFromExpression(filter, isRelatedProperty);
+    // If there were related properties, join onto the filter
+    const joinRelation = createRelationExpression(propertiesSet);
+    if (joinRelation)
+      filterQuery.joinRelation(joinRelation);
 
-  // TODO: Ideally don't even join onto the filter query if there are no properties
-  // if (propertiesSet.length === 0) {
-  //   return builder;
-  // }
-
-  // If there weren't any related properties, don't bother joining
-  const joinRelation = createRelationExpression(propertiesSet);
-  if (joinRelation)
-    filterQuery.joinRelation(createRelationExpression(propertiesSet));
-
-  const filterQueryAlias = 'filter_query';
-  builder.innerJoin(
-    filterQuery.as(filterQueryAlias),
-    idColumn,
-    `${filterQueryAlias}.${Model.idColumn}`
-  );
+    const filterQueryAlias = 'filter_query';
+    builder.innerJoin(
+      filterQuery.as(filterQueryAlias),
+      idColumn,
+      `${filterQueryAlias}.${Model.idColumn}`
+    );
+  }
 
   return builder;
 };
