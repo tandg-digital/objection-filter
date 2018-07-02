@@ -239,22 +239,192 @@ describe('eager object notation', function () {
         });
       });
 
-      describe('error conditions', function() {
-        const validationError = new Error('should have thrown an error');
-
-        it('should throw an error on early literal', done => {
-          buildFilter(Person)
+      describe('root model using root fields', function() {
+        it('should filter by a single field', async function() {
+          const result = await buildFilter(Person)
             .build({
               eager: {
-               movies: {
+                $where: {
+                  firstName: 'F00'
+                }
+              }
+            })
+          result.map(item => item.firstName).should.deep.equal([
+            'F00'
+          ]);
+        });
+
+        it('should filter using multiple fields', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  firstName: 'F00',
+                  lastName: 'L09'
+                }
+              }
+            })
+          result.map(item => item.firstName).should.deep.equal([
+            'F00'
+          ]);
+          result.map(item => item.lastName).should.deep.equal([
+            'L09'
+          ]);
+        });
+      });
+
+      describe('eager models using base fields', function() {
+        it('should filter by a single field', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                movies: {
                   $where: {
-                    $or: [1]
+                    name: 'M99'
                   }
                 }
               }
             })
-            .then(() => done(validationError))
-            .catch(err => done());
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(['M99']);
+        });
+      });
+
+      describe('root model using related fields', function() {
+        it('should filter by a single field', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  'movies.name': 'M00'
+                }
+              }
+            });
+          result.map(item => item.firstName).should.deep.equal([
+            'F09'
+          ]);
+        });
+
+        it('should filter using multiple fields', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  'movies.name': 'M00',
+                  'pets.name': 'P90'
+                }
+              }
+            });
+          result.map(item => item.firstName).should.deep.equal([
+            'F09'
+          ]);
+        });
+      });
+
+      describe('eager models using related fields', function() {
+        // Some convenient constants
+        const baseSet = [
+          'M99',
+          'M98',
+          'M97',
+          'M96',
+          'M95',
+          'M94',
+          'M93',
+          'M92',
+          'M91',
+          'M90'
+        ];
+        const extendedSet = [
+          'M99',
+          'M98',
+          'M97',
+          'M96',
+          'M95',
+          'M94',
+          'M93',
+          'M92',
+          'M91',
+          'M90',
+          'M89',
+          'M88',
+          'M87',
+          'M86',
+          'M85',
+          'M84',
+          'M83',
+          'M82',
+          'M81',
+          'M80'
+        ];
+
+        it('should filter by a single field', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                movies: {
+                  $where: {
+                    'category.name': 'C00'
+                  }
+                }
+              }
+            })
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(baseSet);
+        });
+
+        it('should filter by using a logical condition', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                movies: {
+                  $where: {
+                    $or: [
+                      { 'category.name': 'C00' },
+                      { 'category.name': 'C01' },
+                    ]
+                  }
+                }
+              }
+            })
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(extendedSet);
+        });
+
+        it('should filter by using a logical condition after property name', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                movies: {
+                  $where: {
+                    'category.name': {
+                      $or: [
+                        'C00',
+                        'C01'
+                      ]
+                    }
+                  }
+                }
+              }
+            })
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(extendedSet);
         });
       });
     });
