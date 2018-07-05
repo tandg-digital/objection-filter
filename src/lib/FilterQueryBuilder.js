@@ -89,14 +89,6 @@ module.exports = class FilterQueryBuilder {
 };
 
 /**
- * Given an input QueryBuilder, return a function which will prefix the
- * table name of the model onto a target column name
- * @param {QueryBuilder} builder
- */
-const withTablePrefix = builder => name =>
-  [builder.modelClass().tableName, name].join('.');
-
-/**
  * Apply an object notation eager object with scope based filtering
  * @param {Object} expression
  * @param {QueryBuilder} builder
@@ -104,14 +96,6 @@ const withTablePrefix = builder => name =>
  * @param {Object} utils
  */
 const applyEagerFilter = function(expression = {}, builder, path, utils) {
-  const { applyPropertyExpression } = utils;
-  const applyLogicalExpression = iterateLogicalExpression({
-    onExit: applyPropertyExpression,
-    onLiteral: function() {
-      throw new Error('Filter is invalid');
-    }
-  });
-
   debug('applyEagerFilter(', { expression, path }, ')');
 
   // Apply a where on the root model
