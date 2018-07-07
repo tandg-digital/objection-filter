@@ -376,7 +376,8 @@ describe('logical expression filters', function () {
                     }
                   ]
                 }
-              }
+              },
+              order: 'firstName'
             })
             .then(result => {
               result.length.should.equal(5);

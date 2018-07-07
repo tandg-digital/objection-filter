@@ -6,9 +6,11 @@ Here are some example queries to perform common operations.
 For models _Customer_ belongsTo _City_ belongsTo _Country_
 ```json
 {
-  "require": {
-    "cities.countries.name": {
-      "$like": "Fr"
+  "eager": {
+    "$where": {
+      "cities.countries.name": {
+        "$like": "Fr"
+      }
     }
   }
 }
@@ -70,10 +72,10 @@ For models:
   * _Customer_ hasMany _favorites_
 ```json
 {
-  "require": {
-    "cities.countries.name": "Australia"
-  },
   "eager": {
+    "$where": {
+      "cities.countries.name": "Australia"
+    },
     "favorites": {
       "$where": {
         "starRanking": { "$gte": 3 }

@@ -42,6 +42,10 @@ module.exports = {
         table.string('lastName');
         table.string('nickName');
       })
+      .createTable('Category', function (table) {
+        table.bigincrements('id').unsigned().primary();
+        table.string('name').index();
+      })
       .createTable('Animal', function (table) {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('ownerId').unsigned().references('Person.id').index();
@@ -49,6 +53,7 @@ module.exports = {
       })
       .createTable('Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
+        table.biginteger('categoryId').unsigned().references('Category.id').index();
         table.string('name').index();
         table.string('code');
       })
@@ -82,18 +87,18 @@ module.exports = {
    *
    *   Each movie has a category C00 to C90 (i.e. 10 categories)
    *
-   * name    | parent  | pets      | movies
-   * --------+---------+-----------+-----------
-   * F00 L09 | null    | P00 - P09 | M99 - M90
-   * F01 L08 | F00 L09 | P10 - P19 | M89 - M80
-   * F02 L07 | F01 L08 | P20 - P29 | M79 - M79
-   * F03 L06 | F02 L07 | P30 - P39 | M69 - M60
-   * F04 L05 | F03 L06 | P40 - P49 | M59 - M50
-   * F05 L04 | F04 L05 | P50 - P59 | M49 - M40
-   * F06 L03 | F05 L04 | P60 - P69 | M39 - M30
-   * F07 L02 | F06 L03 | P70 - P79 | M29 - M20
-   * F08 L01 | F07 L02 | P80 - P89 | M19 - M10
-   * F09 L00 | F08 L01 | P90 - P99 | M09 - M00
+   * name    | parent  | pets      | movies     | category
+   * --------+---------+-----------+------------+----------
+   * F00 L09 | null    | P00 - P09 | M99 - M90  | C00
+   * F01 L08 | F00 L09 | P10 - P19 | M89 - M80  | C01
+   * F02 L07 | F01 L08 | P20 - P29 | M79 - M79  | C02
+   * F03 L06 | F02 L07 | P30 - P39 | M69 - M60  | C03
+   * F04 L05 | F03 L06 | P40 - P49 | M59 - M50  | C04
+   * F05 L04 | F04 L05 | P50 - P59 | M49 - M40  | C05
+   * F06 L03 | F05 L04 | P60 - P69 | M39 - M30  | C06
+   * F07 L02 | F06 L03 | P70 - P79 | M29 - M20  | C07
+   * F08 L01 | F07 L02 | P80 - P89 | M19 - M10  | C08
+   * F09 L00 | F08 L01 | P90 - P99 | M09 - M00  | C09
    */
   insertData: function (session, counts, progress) {
     progress = progress || _.noop;
@@ -112,6 +117,11 @@ module.exports = {
         age: p * 10,
         nickName: p <= 4 ? null : ('N' + zeroPad(p)),
 
+        category: {
+          id: p + 1,
+          name: 'C' + zeroPad(p)
+        },
+
         pets: _.times(A, function (a) {
           var id = p * A + a + 1;
           return {id: id, name: 'P' + zeroPad(id - 1), ownerId: p + 1};
@@ -121,6 +131,7 @@ module.exports = {
           var id = p * M + m + 1;
           return {
             id: id,
+            categoryId: p + 1,
             name: 'M' + zeroPad(P * M - id),
             code: p <= 4 ? null : ('C' + zeroPad(p)),
           };
@@ -135,7 +146,13 @@ module.exports = {
 
     return Promise.all(_.map(_.chunk(persons, C), function (personChunk) {
       return session.knex('Person').insert(pick(personChunk, ['id', 'firstName', 'lastName', 'age', 'nickName']));
-    })).then(function () {
+    })).then(function() {
+      return Promise.all(_.map(_.chunk(persons, C), function (personChunk) {
+        return session.knex('Category').insert(
+          pick(personChunk, 'category').map(item => item.category)
+        )
+      }))
+    }).then(function () {
       return session.knex('Person').update('pid', session.knex.raw('id - 1')).where('id', '>', 1);
     }).then(function () {
       progress('1/4');
@@ -154,7 +171,7 @@ module.exports = {
       }));
     }).then(function () {
       progress('4/4');
-    });
+    })
   }
 };
 
@@ -214,16 +231,37 @@ function createModels(knex) {
     static get tableName() {
       return 'Movie'
     }
+
+    static get relationMappings() {
+      return {
+        category: {
+          relation: objection.BelongsToOneRelation,
+          modelClass: Category,
+          join: {
+            from: 'Movie.categoryId',
+            to: 'Category.id'
+          }
+        }
+      }
+    }
+  }
+
+  class Category extends objection.Model {
+    static get tableName() {
+      return 'Category'
+    }
   }
 
   Person.knex(knex);
   Animal.knex(knex);
   Movie.knex(knex);
+  Category.knex(knex);
 
   return {
     Person: Person,
     Animal: Animal,
-    Movie: Movie
+    Movie: Movie,
+    Category: Category
   };
 }
 

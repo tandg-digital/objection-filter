@@ -41,23 +41,22 @@ Available filter properties include:
 ```js
 // GET /api/Customers
 {
-  // Properties on related models which are required to show the root model
-  "require": {
-    "profile.isActivated": true,
-    "city.country": { "$like": "A" }
-  },
-  // Properties to filter by on the related models themselves
+  // Filtering and eager loading
   "eager": {
-    "$where": { // Top level $where filters on the root model
+    // Top level $where filters on the root model
+    "$where": {
       "firstName": "John"
+      "profile.isActivated": true,
+      "city.country": { "$like": "A" }
     },
+    // Nested $where filters on each related model
     "orders": {
       "$where": {
-        "isComplete": true
+        "state.isComplete": true
       },
       "products": {
         "$where": {
-          "cost": { "$lt": 100 }
+          "category.name": { "$like": "A" }
         }
       }
     }
@@ -71,7 +70,7 @@ Available filter properties include:
 }
 ```
 
-> There `where` operator from < v1.0.0 is still available and can be combined with the `eager` string type notation. However, it's recommended to use eager object notation as in the `eager` property above.
+> The `where` operator from < v1.0.0 is still available and can be combined with the `eager` string type notation. The same is applicable to the `require` operator. For filtering going forward, it's recommended to use the objection object-notation for eager loading along with `$where` definitions at each level.
 
 # Filter Operators
 
@@ -89,29 +88,31 @@ There are a number of built-in operations that can be applied to columns (custom
 An example of operator usage
 ```json
 {
-  "require": {
-    "property0": "Exactly Equals",
-    "property1": {
-      "$equals": 5
-    },
-    "property2": {
-      "$gt": 5
-    },
-    "property3": {
-      "$lt": 10,
-      "$gt": 5
-    },
-    "property4": {
-      "$in": [ 1, 2, 3 ]
-    },
-    "property5": {
-      "$exists": false
-    },
-    "property6": {
-      "$or": [
-        { "$in": [ 1, 2, 3 ] },
-        { "$equals": 100 }
-      ]
+  "eager": {
+    "$where": {
+      "property0": "Exactly Equals",
+      "property1": {
+        "$equals": 5
+      },
+      "property2": {
+        "$gt": 5
+      },
+      "property3": {
+        "$lt": 10,
+        "$gt": 5
+      },
+      "property4": {
+        "$in": [ 1, 2, 3 ]
+      },
+      "property5": {
+        "$exists": false
+      },
+      "property6": {
+        "$or": [
+          { "$in": [ 1, 2, 3 ] },
+          { "$equals": 100 }
+        ]
+      }
     }
   }
 }
@@ -120,16 +121,18 @@ An example of operator usage
 # Logical Expressions
 Logical expressions can be applied to both the `eager` and `require` helpers. The `where` top level operator will eventually be deprecated and replaced by the new `eager` [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation) in objection.js.
 
-##### Examples using `require`
-The `require` expression is used to "filter the root model based on related models". Given this, related fields between models can be mixed anywhere in the logical expression.
+##### Examples using `$where`
+The `$where` expression is used to "filter models". Given this, related fields between models can be mixed anywhere in the logical expression.
 
 ```json
 {
-  "require": {
-    "$or": [
-      { "city.country.name": "Australia" },
-      { "city.code": "09" }
-    ]
+  "eager": {
+    "$where": {
+      "$or": [
+        { "city.country.name": "Australia" },
+        { "city.code": "09" }
+      ]
+    }
   }
 }
 ```
@@ -137,15 +140,17 @@ The `require` expression is used to "filter the root model based on related mode
 Logical expressions can also be nested
 ```json
 {
-  "require": {
-    "$and": {
-      "name": "John",
-      "$or": [
-        { "city.country.name": "Australia" },
-        { "city.code": { "$like": "01" } }
-      ]
-    }
-  }
+	"eager": {
+		"$where": {
+			"$and": {
+				"name": "John",
+				"$or": [
+				  { "city.country.name": "Australia" },
+				  { "city.code": { "$like": "01" }}
+				]
+			}
+		}
+	}
 }
 ```
 
@@ -153,40 +158,25 @@ Note that in these examples, all logical expressions come _before_ the property 
 
 ```json
 {
-  "require": {
-    "$or": [
-      { "city.country.name": "Australia" },
-      {
-        "city.code": {
-          "$or": [
-            { "$equals": "12" },
-            { "$like": "13" }
-          ]
-        }
-      }
-    ]
-  }
-}
-```
-
-##### Examples using `eager`
-Exsting `eager` expressions will continue to work as expected, and can be combined with the top level `where` to achieve the same result as the [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation).
-
-Logical expressions using eager object notation use the `$where` keyword. An example of this is:
-```json
-{
-  "city": {
+  "eager": {
     "$where": {
       "$or": [
-        { "name": "Auckland" },
-        { "name": "Sydney" }
+        { "city.country.name": "Australia" },
+        {
+          "city.code": {
+            "$or": [
+              { "$equals": "12" },
+              { "$like": "13" }
+            ]
+          }
+        }
       ]
     }
   }
 }
 ```
 
-The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". Since the `$where` will only apply to the current level of relation, trying to access related fields e.g. "country.name" will not work.
+The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". The `$where` will apply to relations of the eager model using dot notation. For example, you can query `Customers`, eager load their `orders` and filter those orders by the `product.name`. Note that `product.name` is a related field of the order model, not the customers model.
 
 # Custom Operators
 
