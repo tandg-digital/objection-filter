@@ -140,17 +140,17 @@ The `$where` expression is used to "filter models". Given this, related fields b
 Logical expressions can also be nested
 ```json
 {
-	"eager": {
-		"$where": {
-			"$and": {
-				"name": "John",
-				"$or": [
-				  { "city.country.name": "Australia" },
-				  { "city.code": { "$like": "01" }}
-				]
-			}
-		}
-	}
+  "eager": {
+    "$where": {
+      "$and": {
+        "name": "John",
+        "$or": [
+          { "city.country.name": "Australia" },
+          { "city.code": { "$like": "01" }}
+        ]
+      }
+    }
+  }
 }
 ```
 
