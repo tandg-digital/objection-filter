@@ -190,16 +190,16 @@ const applyRequire = function (filter = {}, builder, utils) {
   const getFullyQualifiedName = name => sliceRelation(name).fullyQualifiedProperty;
 
   const Model = builder.modelClass();
-  const idColumn = `${Model.tableName}.${Model.idColumn}`;
+  const idColumns = _.isArray(Model.idColumn) ? Model.idColumn : [Model.idColumn];
+  const fullIdColumns = idColumns.map(idColumn => `${Model.tableName}.${idColumn}`);
 
   // TODO: If there are no related properties, don't join
   const relatedPropertiesSet = propertiesSet.filter(isRelatedProperty);
   if (relatedPropertiesSet.length === 0) {
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
   } else {
-    const filterQuery = Model
-    .query()
-    .distinct(idColumn);
+    const qb = Model.query();
+    const filterQuery = qb.distinct.apply(qb, fullIdColumns);
 
     applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
 
@@ -209,11 +209,12 @@ const applyRequire = function (filter = {}, builder, utils) {
       filterQuery.joinRelation(joinRelation);
 
     const filterQueryAlias = 'filter_query';
-    builder.innerJoin(
-      filterQuery.as(filterQueryAlias),
-      idColumn,
-      `${filterQueryAlias}.${Model.idColumn}`
-    );
+    builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
+      const _this = this;
+      fullIdColumns.forEach(function (fullIdColumn, index) {
+        _this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
+      });
+    });
   }
 
   return builder;

@@ -25,6 +25,7 @@ module.exports = {
 
   dropDb: function (session) {
     return session.knex.schema
+      .dropTableIfExists('Animal_Movie')
       .dropTableIfExists('Person_Movie')
       .dropTableIfExists('Movie')
       .dropTableIfExists('Category')
@@ -61,6 +62,11 @@ module.exports = {
         table.bigincrements('id').unsigned().primary();
         table.biginteger('actorId').unsigned().references('Person.id').index();
         table.biginteger('movieId').unsigned().references('Movie.id').index();
+      })
+      .createTable('Animal_Movie', function (table) {
+        table.biginteger('animalId').unsigned().references('Animal.id').index();
+        table.biginteger('movieId').unsigned().references('Movie.id').index();
+        table.primary(['animalId', 'movieId']);
       })
       .then(function () {
         if (session.config.client === 'postgres') {
@@ -155,22 +161,27 @@ module.exports = {
     }).then(function () {
       return session.knex('Person').update('pid', session.knex.raw('id - 1')).where('id', '>', 1);
     }).then(function () {
-      progress('1/4');
+      progress('1/5');
       return Promise.all(_.map(_.chunk(_.flatten(_.map(persons, 'pets')), C), function (animalChunk) {
         return session.knex('Animal').insert(animalChunk);
       }));
     }).then(function () {
-      progress('2/4');
+      progress('2/5');
       return Promise.all(_.map(_.chunk(_.flatten(_.map(persons, 'movies')), C), function (movieChunk) {
         return session.knex('Movie').insert(movieChunk);
       }));
     }).then(function () {
-      progress('3/4');
+      progress('3/5');
       return Promise.all(_.map(_.chunk(_.flatten(_.map(persons, 'personMovies')), C), function (movieChunk) {
         return session.knex('Person_Movie').insert(movieChunk);
       }));
     }).then(function () {
-      progress('4/4');
+      progress('4/5');
+      return session.knex('Animal_Movie').insert([
+        { animalId: 1, movieId: 1 }
+      ]);
+    }).then(function () {
+      progress('5/5');
     })
   }
 };
@@ -252,16 +263,49 @@ function createModels(knex) {
     }
   }
 
+  class AnimalMovie extends objection.Model {
+    static get idColumn() {
+      return ['animalId', 'movieId'];
+    }
+
+    static get tableName() {
+      return 'Animal_Movie'
+    }
+
+    static get relationMappings() {
+      return {
+        animal: {
+          relation: objection.HasOneRelation,
+          modelClass: Animal,
+          join: {
+            from: 'Animal_Movie.animalId',
+            to: 'Animal.id'
+          }
+        },
+        movie: {
+          relation: objection.HasOneRelation,
+          modelClass: Movie,
+          join: {
+            from: 'Animal_Movie.movieId',
+            to: 'Movie.id'
+          }
+        }
+      }
+    }
+  }
+
   Person.knex(knex);
   Animal.knex(knex);
   Movie.knex(knex);
   Category.knex(knex);
+  AnimalMovie.knex(knex);
 
   return {
     Person: Person,
     Animal: Animal,
     Movie: Movie,
-    Category: Category
+    Category: Category,
+    AnimalMovie: AnimalMovie
   };
 }
 
