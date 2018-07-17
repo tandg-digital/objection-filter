@@ -10,7 +10,7 @@ describe('basic filters', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
 
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie, AnimalMovie;
+      var session, knex, Person, Animal, Movie, MovieVersion;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
@@ -18,7 +18,7 @@ describe('basic filters', function () {
         Person = session.models.Person;
         Animal = session.models.Animal;
         Movie = session.models.Movie;
-        AnimalMovie = session.models.AnimalMovie;
+        MovieVersion = session.models.MovieVersion;
       });
 
       before(function () {
@@ -222,19 +222,17 @@ describe('basic filters', function () {
         });
 
         it('should require with composite keys', done => {
-          buildFilter(AnimalMovie)
+          buildFilter(MovieVersion)
             .build({
-              eager: 'animal',
+              eager: 'movie',
               require: {
-                'animal.name': 'P00'
+                'movie.name': 'M00'
               }
             })
             .then(result => {
-              console.log(result);
               result.length.should.equal(1);
-              result[0].animalId.should.equal(1);
-              result[0].movieId.should.equal(1);
-              result[0].animal.name.should.equal('P00');
+              result[0].movieId.should.equal(100);
+              result[0].movie.name.should.equal('M00');
               done();
             })
             .catch(done);

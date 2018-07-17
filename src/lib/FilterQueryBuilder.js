@@ -193,13 +193,12 @@ const applyRequire = function (filter = {}, builder, utils) {
   const idColumns = _.isArray(Model.idColumn) ? Model.idColumn : [Model.idColumn];
   const fullIdColumns = idColumns.map(idColumn => `${Model.tableName}.${idColumn}`);
 
-  // TODO: If there are no related properties, don't join
+  // If there are no related properties, don't join
   const relatedPropertiesSet = propertiesSet.filter(isRelatedProperty);
   if (relatedPropertiesSet.length === 0) {
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
   } else {
-    const qb = Model.query();
-    const filterQuery = qb.distinct.apply(qb, fullIdColumns);
+    const filterQuery = Model.query().distinct(...fullIdColumns);
 
     applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
 
@@ -210,9 +209,8 @@ const applyRequire = function (filter = {}, builder, utils) {
 
     const filterQueryAlias = 'filter_query';
     builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
-      const _this = this;
-      fullIdColumns.forEach(function (fullIdColumn, index) {
-        _this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
+      fullIdColumns.forEach((fullIdColumn, index) => {
+        this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
       });
     });
   }

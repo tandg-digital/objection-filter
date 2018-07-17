@@ -25,7 +25,7 @@ module.exports = {
 
   dropDb: function (session) {
     return session.knex.schema
-      .dropTableIfExists('Animal_Movie')
+      .dropTableIfExists('Movie_Version')
       .dropTableIfExists('Person_Movie')
       .dropTableIfExists('Movie')
       .dropTableIfExists('Category')
@@ -63,10 +63,10 @@ module.exports = {
         table.biginteger('actorId').unsigned().references('Person.id').index();
         table.biginteger('movieId').unsigned().references('Movie.id').index();
       })
-      .createTable('Animal_Movie', function (table) {
-        table.biginteger('animalId').unsigned().references('Animal.id').index();
+      .createTable('Movie_Version', function (table) {
         table.biginteger('movieId').unsigned().references('Movie.id').index();
-        table.primary(['animalId', 'movieId']);
+        table.integer('version').index();
+        table.primary(['movieId', 'version']);
       })
       .then(function () {
         if (session.config.client === 'postgres') {
@@ -143,6 +143,14 @@ module.exports = {
           };
         }),
 
+        movieVersions: _.times(M, function (m) {
+          var id = p * M + m + 1;
+          return {
+            movieId: id,
+            version: 1
+          };
+        }),
+
         personMovies: _.times(M, function (m) {
           var id = p * M + m + 1;
           return {actorId: p + 1, movieId: id};
@@ -177,9 +185,9 @@ module.exports = {
       }));
     }).then(function () {
       progress('4/5');
-      return session.knex('Animal_Movie').insert([
-        { animalId: 1, movieId: 1 }
-      ]);
+      return Promise.all(_.map(_.chunk(_.flatten(_.map(persons, 'movieVersions')), C), function (movieVersionChunk) {
+        return session.knex('Movie_Version').insert(movieVersionChunk);
+      }));
     }).then(function () {
       progress('5/5');
     })
@@ -263,30 +271,22 @@ function createModels(knex) {
     }
   }
 
-  class AnimalMovie extends objection.Model {
+  class MovieVersion extends objection.Model {
     static get idColumn() {
-      return ['animalId', 'movieId'];
+      return ['movieId', 'version'];
     }
 
     static get tableName() {
-      return 'Animal_Movie'
+      return 'Movie_Version'
     }
 
     static get relationMappings() {
       return {
-        animal: {
-          relation: objection.HasOneRelation,
-          modelClass: Animal,
-          join: {
-            from: 'Animal_Movie.animalId',
-            to: 'Animal.id'
-          }
-        },
         movie: {
           relation: objection.HasOneRelation,
           modelClass: Movie,
           join: {
-            from: 'Animal_Movie.movieId',
+            from: 'Movie_Version.movieId',
             to: 'Movie.id'
           }
         }
@@ -298,14 +298,14 @@ function createModels(knex) {
   Animal.knex(knex);
   Movie.knex(knex);
   Category.knex(knex);
-  AnimalMovie.knex(knex);
+  MovieVersion.knex(knex);
 
   return {
     Person: Person,
     Animal: Animal,
     Movie: Movie,
     Category: Category,
-    AnimalMovie: AnimalMovie
+    MovieVersion: MovieVersion
   };
 }
 
