@@ -4,10 +4,10 @@ node_js:
 - '8'
 - '7'
 install:
-  - npm install -g babel-cli
-  - npm install -g coveralls
-  - npm install
-after_success: npm run coverage
+  - yarn global add babel-cli
+  - yarn global add coveralls
+  - yarn install
+after_success: yarn run coverage
 deploy:
   provider: npm
   email: jeffrey.yan@outlook.com
