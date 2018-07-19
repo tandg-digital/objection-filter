@@ -4,8 +4,8 @@ node_js:
 - '8'
 - '7'
 install:
-  - yarn install -g babel-cli
-  - yarn install -g coveralls
+  - yarn global add babel-cli
+  - yarn global add coveralls
   - yarn install
 after_success: yarn run coverage
 deploy:
