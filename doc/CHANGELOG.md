@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.3.0
+
+* Can now use models which have composite id keys
+
 ### 1.2.0
 
 * Allow filtering on related models on the root model and eagerly loaded models
