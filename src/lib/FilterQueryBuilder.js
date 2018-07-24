@@ -345,6 +345,10 @@ const applyFields = function(fields = [], builder) {
 module.exports.applyFields = applyFields;
 
 const applyLimit = function(limit, offset, builder) {
+  if (limit && offset) {
+    builder.page(parseInt(offset / limit), limit);
+    return builder;
+  }
   if (limit) builder.limit(limit);
   if (offset) builder.offset(offset);
 

@@ -400,6 +400,10 @@ var applyFields = function applyFields() {
 module.exports.applyFields = applyFields;
 
 var applyLimit = function applyLimit(limit, offset, builder) {
+  if (limit && offset) {
+    builder.page(parseInt(offset / limit), limit);
+    return builder;
+  }
   if (limit) builder.limit(limit);
   if (offset) builder.offset(offset);
 
