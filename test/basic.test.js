@@ -121,6 +121,34 @@ describe('basic filters', function () {
             })
             .catch(done);
         });
+
+        it('should order by multiple columns', done => {
+          buildFilter(Movie)
+            .build({
+              order: 'seq,id'
+            })
+            .then(result => {
+              result.map(item => item.id).should.deep.equal(
+                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+              );
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should order by multiple columns with space', done => {
+          buildFilter(Movie)
+            .build({
+              order: 'seq, id'
+            })
+            .then(result => {
+              result.map(item => item.id).should.deep.equal(
+                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+              );
+              done();
+            })
+            .catch(done);
+        });
       });
 
       describe('eager loaded data', function() {
