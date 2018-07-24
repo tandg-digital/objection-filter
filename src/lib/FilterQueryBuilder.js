@@ -263,7 +263,7 @@ const applyOrder = function (order, builder) {
   const Model = builder.modelClass();
 
   order.split(',').forEach(orderStatement => {
-    const [orderProperty, direction = 'asc'] = orderStatement.split(' ');
+    const [orderProperty, direction = 'asc'] = orderStatement.trim().split(' ');
     const { propertyName, relationName } = sliceRelation(orderProperty);
 
     if (!relationName) {

@@ -57,6 +57,7 @@ module.exports = {
         table.biginteger('categoryId').unsigned().references('Category.id').index();
         table.string('name').index();
         table.string('code');
+        table.integer('seq').index();
       })
       .createTable('Person_Movie', function (table) {
         table.bigincrements('id').unsigned().primary();
@@ -140,6 +141,7 @@ module.exports = {
             categoryId: p + 1,
             name: 'M' + zeroPad(P * M - id),
             code: p <= 4 ? null : ('C' + zeroPad(p)),
+            seq: Math.floor(Math.random() * 20)
           };
         }),
 
