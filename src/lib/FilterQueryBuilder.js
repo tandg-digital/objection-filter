@@ -17,16 +17,11 @@
  */
 const _ = require('lodash');
 const { debug } = require('../config');
-const {
-  sliceRelation,
-  Operations
-} = require('./utils');
-const {
-  createRelationExpression
-} = require('./ExpressionBuilder');
+const { sliceRelation, Operations } = require('./utils');
+const { createRelationExpression } = require('./ExpressionBuilder');
 const {
   iterateLogicalExpression,
-  getPropertiesFromExpression
+  getPropertiesFromExpression,
 } = require('./LogicalIterator');
 
 module.exports = class FilterQueryBuilder {
@@ -47,33 +42,28 @@ module.exports = class FilterQueryBuilder {
   }
 
   build(params = {}) {
-    const {
-      fields,
-      limit,
-      offset,
-      order,
-      eager
-    } = params;
+    const { fields, limit, offset, order, eager } = params;
 
     applyFields(fields, this._builder);
-    applyWhere(params.where, this._builder, this.utils);
+    applyWhere(
+      _.omit(params, ['fields', 'offset', 'limit', 'order', 'require']),
+      this._builder,
+      this.utils
+    );
     applyRequire(params.require, this._builder, this.utils);
     applyOrder(order, this._builder);
 
     // Clone the query before adding pagination functions in case of counting
-    this.countQuery = this._builder.clone();
+    // this.countQuery = this._builder.clone();
 
-    applyEager(eager, this._builder, this.utils);
+    // applyEager(eager, this._builder, this.utils);
     applyLimit(limit, offset, this._builder);
 
     return this._builder;
   }
 
   count() {
-    const query = this
-      .countQuery
-      .count('* AS count')
-      .first();
+    const query = this.countQuery.count('* AS count').first();
 
     return query.then(result => result.count);
   }
@@ -110,8 +100,7 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
     const rhs = expression[lhs];
     debug(`Eager Filter lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-    if (typeof rhs === 'boolean' || typeof rhs === 'string')
-      continue;
+    if (typeof rhs === 'boolean' || typeof rhs === 'string') continue;
 
     // rhs is an object
     const eagerName = rhs.$relation ? `${rhs.$relation} as ${lhs}` : lhs;
@@ -142,13 +131,17 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
 };
 
 const applyEagerObject = function(expression, builder, utils) {
-  const expressionWithoutFilters = applyEagerFilter(expression, builder, [], utils);
+  const expressionWithoutFilters = applyEagerFilter(
+    expression,
+    builder,
+    [],
+    utils
+  );
   builder.eager(expressionWithoutFilters);
 };
 
-const applyEager = function (eager, builder, utils) {
-  if (typeof eager === 'object')
-    return applyEagerObject(eager, builder, utils);
+const applyEager = function(eager, builder, utils) {
+  if (typeof eager === 'object') return applyEagerObject(eager, builder, utils);
 
   builder.eager(eager);
 };
@@ -171,13 +164,12 @@ const isRelatedProperty = function(name) {
  * @param {Object} filter
  * @param {QueryBuilder} builder The root query builder
  */
-const applyRequire = function (filter = {}, builder, utils) {
+const applyRequire = function(filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
 
   // If there are no properties at all, just return
   const propertiesSet = getPropertiesFromExpression(filter);
-  if (propertiesSet.length === 0)
-    return builder;
+  if (propertiesSet.length === 0) return builder;
 
   const applyLogicalExpression = iterateLogicalExpression({
     onExit: function(propertyName, value, builder) {
@@ -185,13 +177,18 @@ const applyRequire = function (filter = {}, builder, utils) {
     },
     onLiteral: function() {
       throw new Error('Filter is invalid');
-    }
+    },
   });
-  const getFullyQualifiedName = name => sliceRelation(name).fullyQualifiedProperty;
+  const getFullyQualifiedName = name =>
+    sliceRelation(name).fullyQualifiedProperty;
 
   const Model = builder.modelClass();
-  const idColumns = _.isArray(Model.idColumn) ? Model.idColumn : [Model.idColumn];
-  const fullIdColumns = idColumns.map(idColumn => `${Model.tableName}.${idColumn}`);
+  const idColumns = _.isArray(Model.idColumn)
+    ? Model.idColumn
+    : [Model.idColumn];
+  const fullIdColumns = idColumns.map(
+    idColumn => `${Model.tableName}.${idColumn}`
+  );
 
   // If there are no related properties, don't join
   const relatedPropertiesSet = propertiesSet.filter(isRelatedProperty);
@@ -204,11 +201,10 @@ const applyRequire = function (filter = {}, builder, utils) {
 
     // If there were related properties, join onto the filter
     const joinRelation = createRelationExpression(propertiesSet);
-    if (joinRelation)
-      filterQuery.joinRelation(joinRelation);
+    if (joinRelation) filterQuery.joinRelation(joinRelation);
 
     const filterQueryAlias = 'filter_query';
-    builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
+    builder.innerJoin(filterQuery.as(filterQueryAlias), function() {
       fullIdColumns.forEach((fullIdColumn, index) => {
         this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
       });
@@ -227,7 +223,7 @@ module.exports.applyRequire = applyRequire;
  * @param {Object} filter The filter object
  * @param {QueryBuilder} builder The root query builder
  */
-const applyWhere = function (filter = {}, builder, utils) {
+const applyWhere = function(filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
   const Model = builder.modelClass();
 
@@ -237,13 +233,23 @@ const applyWhere = function (filter = {}, builder, utils) {
     if (!relationName) {
       // Root level where should include the root table name
       const fullyQualifiedProperty = `${Model.tableName}.${propertyName}`;
-      return applyPropertyExpression(fullyQualifiedProperty, andExpression, builder);
+      return applyPropertyExpression(
+        fullyQualifiedProperty,
+        andExpression,
+        builder
+      );
     }
 
     // Eager query fields should include the eager model table name
     builder.modifyEager(relationName, eagerBuilder => {
-      const fullyQualifiedProperty = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
-      applyPropertyExpression(fullyQualifiedProperty, andExpression, eagerBuilder);
+      const fullyQualifiedProperty = `${
+        eagerBuilder.modelClass().tableName
+      }.${propertyName}`;
+      applyPropertyExpression(
+        fullyQualifiedProperty,
+        andExpression,
+        eagerBuilder
+      );
     });
   });
 
@@ -258,7 +264,7 @@ module.exports.applyWhere = applyWhere;
  * @param {String} order An comma delimited order expression
  * @param {QueryBuilder} builder The root query builder
  */
-const applyOrder = function (order, builder) {
+const applyOrder = function(order, builder) {
   if (!order) return;
   const Model = builder.modelClass();
 
@@ -274,7 +280,9 @@ const applyOrder = function (order, builder) {
 
     // For now, only allow sub-query ordering of eager expressions
     builder.modifyEager(relationName, eagerBuilder => {
-      const fullyQualifiedColumn = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
+      const fullyQualifiedColumn = `${
+        eagerBuilder.modelClass().tableName
+      }.${propertyName}`;
       eagerBuilder.orderBy(fullyQualifiedColumn, direction);
     });
   });
@@ -287,15 +295,18 @@ module.exports.applyOrder = applyOrder;
  * Based on a relation name, select a subset of fields. Do nothing if there are no fields
  * @param {Builder} builder An instance of a knex builder
  * @param {Array<String>} fields A list of fields to select
-  */
+ */
 const selectFields = (fields = [], builder, relationName) => {
   if (fields.length === 0) return;
 
-  if (!relationName)
-    return builder.select(fields);
+  if (!relationName) return builder.select(fields);
 
   builder.modifyEager(relationName, eagerQueryBuilder => {
-    eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
+    eagerQueryBuilder.select(
+      fields.map(
+        field => `${eagerQueryBuilder.modelClass().tableName}.${field}`
+      )
+    );
   });
 };
 
@@ -304,7 +315,7 @@ const selectFields = (fields = [], builder, relationName) => {
  * @param {Array<String>} fields An array of dot notation fields
  * @param {QueryBuilder} builder The root query builder
  */
-const applyFields = function (fields = [], builder) {
+const applyFields = function(fields = [], builder) {
   const Model = builder.modelClass();
 
   // Group fields by relation e.g. ["a.b.name", "a.b.id"] => {"a.b": ["name", "id"]}
@@ -325,19 +336,17 @@ const applyFields = function (fields = [], builder) {
   selectFields(rootFields, builder);
 
   // Related fields
-  _.map(fieldsByRelation, (fields, relationName) => selectFields(
-    fields, builder, relationName
-  ));
+  _.map(fieldsByRelation, (fields, relationName) =>
+    selectFields(fields, builder, relationName)
+  );
 
   return builder;
 };
 module.exports.applyFields = applyFields;
 
-const applyLimit = function (limit, offset, builder) {
-  if (limit)
-    builder.limit(limit);
-  if (offset)
-    builder.offset(offset);
+const applyLimit = function(limit, offset, builder) {
+  if (limit) builder.limit(limit);
+  if (offset) builder.offset(offset);
 
   return builder;
 };
