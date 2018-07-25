@@ -187,7 +187,7 @@ const applyRequire = function (filter = {}, builder, utils) {
       throw new Error('Filter is invalid');
     }
   });
-  const getFullyQualifiedName = name => sliceRelation(name).fullyQualifiedProperty;
+  const getFullyQualifiedName = name => sliceRelation(name, '.', Model.tableName).fullyQualifiedProperty;
 
   const Model = builder.modelClass();
   const idColumns = _.isArray(Model.idColumn) ? Model.idColumn : [Model.idColumn];

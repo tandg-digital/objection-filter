@@ -14,7 +14,7 @@ const { iterateLogicalExpression } = require('./LogicalIterator');
  * @param {String} relatedProperty A dot notation property "a.b.c"
  * @param {String} delimiter A delimeter to use on the relation e.g. "." or ":"
  */
-const sliceRelation = (relatedProperty, delimiter = '.') => {
+const sliceRelation = (relatedProperty, delimiter = '.', rootTableName) => {
   const split = relatedProperty.split('.');
   const propertyName = split[split.length - 1];
   const relationName = split.slice(0, split.length - 1).join(delimiter);
@@ -23,7 +23,7 @@ const sliceRelation = (relatedProperty, delimiter = '.') => {
   // https://github.com/Vincit/objection.js/issues/363
   const fullyQualifiedProperty = relationName ?
     `${relationName.replace(/\./g, ':')}.${propertyName}` :
-    propertyName;
+    rootTableName ? `${rootTableName}.${propertyName}`:propertyName;
 
   return { propertyName, relationName, fullyQualifiedProperty };
 };
