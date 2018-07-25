@@ -98,6 +98,7 @@ const iterateLogicalExpression = function({
           });
         } else {
           // The lhs is either a non-logical operator or a property name
+          debug('onExit', propertyTransform(lhs), rhs)
           onExit(propertyTransform(lhs), rhs, subQueryBuilder);
         }
       }

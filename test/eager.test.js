@@ -323,6 +323,23 @@ describe('eager object notation', function () {
             'F09'
           ]);
         });
+
+        it('should filter using root field', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  id: {
+                    $gt: 0
+                  },
+                  'pets.name': 'P90'
+                }
+              }
+            });
+          result.map(item => item.firstName).should.deep.equal([
+            'F09'
+          ]);
+        });
       });
 
       describe('eager models using related fields', function() {
