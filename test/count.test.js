@@ -1,23 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('count queries', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function () {
-      var session, knex, Person, Animal, Movie;
+      let session, Person;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
-        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -44,7 +37,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(10);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -61,7 +54,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(10);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -78,7 +71,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(2);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -99,7 +92,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(1);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -119,7 +112,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(3);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -141,7 +134,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(2);
-            done()
+            done();
           })
           .catch(done);
       });
@@ -158,7 +151,7 @@ describe('count queries', function () {
           })
           .then(count => {
             count.should.equal(10);
-            done()
+            done();
           })
           .catch(done);
       });

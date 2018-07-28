@@ -19,9 +19,9 @@ const toRelationSubExpression = (tree, relationName) => {
   // The first time this is called, there is no relationName
   const prefix = relationName ? `${relationName}.` : '';
 
-  return _.keys(tree).length === 1 ?
-    `${prefix}${expression}` :
-    `${prefix}[${expression}]`;
+  return _.keys(tree).length === 1
+    ? `${prefix}${expression}`
+    : `${prefix}[${expression}]`;
 };
 
 /**
@@ -35,7 +35,7 @@ const createRelationExpression = (fields = []) => {
   // For each field, set some arbitrarily deep property
   const tree = {};
   fields.forEach(field => {
-    const { relationName, propertyName } = sliceRelation(field);
+    const { relationName } = sliceRelation(field);
     if (!relationName) return;
 
     // Set the node of the tree if it doesn't exist yet

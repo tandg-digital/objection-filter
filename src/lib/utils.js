@@ -4,7 +4,6 @@
  * functions which directly touch these operators.
  */
 
-const _ = require('lodash');
 const { debug } = require('../config');
 const { iterateLogicalExpression } = require('./LogicalIterator');
 
@@ -21,9 +20,9 @@ const sliceRelation = (relatedProperty, delimiter = '.', rootTableName) => {
 
   // Nested relations need to be in the format a:b:c.name
   // https://github.com/Vincit/objection.js/issues/363
-  const fullyQualifiedProperty = relationName ?
-    `${relationName.replace(/\./g, ':')}.${propertyName}` :
-    rootTableName ? `${rootTableName}.${propertyName}`:propertyName;
+  const fullyQualifiedProperty = relationName
+    ? `${relationName.replace(/\./g, ':')}.${propertyName}`
+    : rootTableName ? `${rootTableName}.${propertyName}` : propertyName;
 
   return { propertyName, relationName, fullyQualifiedProperty };
 };
@@ -52,9 +51,10 @@ module.exports.Operations = function(options) {
       .where(property, operand),
     $in: (property, operand, builder) => builder
       .where(property, 'in', operand),
-    $exists: (property, operand, builder) => operand ?
-      builder.whereNotNull(property) :
-      builder.whereNull(property),
+    $exists: (property, operand, builder) => (operand
+      ? builder.whereNotNull(property)
+      : builder.whereNull(property)
+    ),
     /**
      * @param {String} property
      * @param {Array} items Must be an array of objects/values
@@ -117,10 +117,9 @@ module.exports.Operations = function(options) {
     );
 
     // If the rhs is a primitive, assume equality
-    if (typeof expression !== 'object')
-      return allOperators.$equals(propertyName, expression, builder);
+    if (typeof expression !== 'object') return allOperators.$equals(propertyName, expression, builder);
 
-    for (let lhs in expression) {
+    for (const lhs in expression) {
       const operationHandler = allOperators[lhs];
       const rhs = expression[lhs];
 

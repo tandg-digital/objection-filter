@@ -1,9 +1,9 @@
-var _ = require('lodash');
-var os = require('os');
-var path = require('path');
-var Knex = require('knex');
-var Promise = require('bluebird');
-var objection = require('objection');
+const _ = require('lodash');
+const os = require('os');
+const path = require('path');
+const Knex = require('knex');
+const Promise = require('bluebird');
+const objection = require('objection');
 
 module.exports = {
   testDatabaseConfigs: [{
@@ -15,7 +15,7 @@ module.exports = {
   }],
 
   initialize: function (knexConfig) {
-    var knex = Knex(knexConfig);
+    const knex = Knex(knexConfig);
     return {
       config: knexConfig,
       models: createModels(knex),
@@ -77,7 +77,7 @@ module.exports = {
             session.knex.raw('CREATE INDEX "animal_name_wildcard_index" ON "Animal" USING btree ("name" varchar_pattern_ops)')
           );
         }
-      })
+      });
   },
 
   /**
@@ -110,13 +110,13 @@ module.exports = {
   insertData: function (session, counts, progress) {
     progress = progress || _.noop;
 
-    var C = 30;
-    var P = counts.persons;
-    var A = counts.pets;
-    var M = counts.movies;
-    var zeroPad = createZeroPad(Math.max(P * A, P * M));
+    const C = 30;
+    const P = counts.persons;
+    const A = counts.pets;
+    const M = counts.movies;
+    const zeroPad = createZeroPad(Math.max(P * A, P * M));
 
-    var persons = _.times(P, function (p) {
+    const persons = _.times(P, function (p) {
       return session.models.Person.fromJson({
         id: p + 1,
         firstName: 'F' + zeroPad(p),
@@ -130,12 +130,12 @@ module.exports = {
         },
 
         pets: _.times(A, function (a) {
-          var id = p * A + a + 1;
-          return {id: id, name: 'P' + zeroPad(id - 1), ownerId: p + 1};
+          const id = p * A + a + 1;
+          return { id: id, name: 'P' + zeroPad(id - 1), ownerId: p + 1 };
         }),
 
         movies: _.times(M, function (m) {
-          var id = p * M + m + 1;
+          const id = p * M + m + 1;
           return {
             id: id,
             categoryId: p + 1,
@@ -146,7 +146,7 @@ module.exports = {
         }),
 
         movieVersions: _.times(M, function (m) {
-          var id = p * M + m + 1;
+          const id = p * M + m + 1;
           return {
             movieId: id,
             version: 1
@@ -154,8 +154,8 @@ module.exports = {
         }),
 
         personMovies: _.times(M, function (m) {
-          var id = p * M + m + 1;
-          return {actorId: p + 1, movieId: id};
+          const id = p * M + m + 1;
+          return { actorId: p + 1, movieId: id };
         })
       });
     });
@@ -166,8 +166,8 @@ module.exports = {
       return Promise.all(_.map(_.chunk(persons, C), function (personChunk) {
         return session.knex('Category').insert(
           pick(personChunk, 'category').map(item => item.category)
-        )
-      }))
+        );
+      }));
     }).then(function () {
       return session.knex('Person').update('pid', session.knex.raw('id - 1')).where('id', '>', 1);
     }).then(function () {
@@ -192,7 +192,7 @@ module.exports = {
       }));
     }).then(function () {
       progress('5/5');
-    })
+    });
   }
 };
 
@@ -238,19 +238,19 @@ function createModels(knex) {
             to: 'Movie.id'
           }
         }
-      }
+      };
     }
   }
 
   class Animal extends objection.Model {
     static get tableName() {
-      return 'Animal'
+      return 'Animal';
     }
   }
 
   class Movie extends objection.Model {
     static get tableName() {
-      return 'Movie'
+      return 'Movie';
     }
 
     static get relationMappings() {
@@ -263,13 +263,13 @@ function createModels(knex) {
             to: 'Category.id'
           }
         }
-      }
+      };
     }
   }
 
   class Category extends objection.Model {
     static get tableName() {
-      return 'Category'
+      return 'Category';
     }
   }
 
@@ -279,7 +279,7 @@ function createModels(knex) {
     }
 
     static get tableName() {
-      return 'Movie_Version'
+      return 'Movie_Version';
     }
 
     static get relationMappings() {
@@ -292,7 +292,7 @@ function createModels(knex) {
             to: 'Movie.id'
           }
         }
-      }
+      };
     }
   }
 
@@ -313,7 +313,7 @@ function createModels(knex) {
 
 function createZeroPad(N) {
   // log(x) / log(10) == log10(x)
-  var n = Math.ceil(Math.log(N) / Math.log(10));
+  const n = Math.ceil(Math.log(N) / Math.log(10));
 
   return function (num) {
     num = num.toString();

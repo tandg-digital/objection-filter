@@ -106,12 +106,11 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
   }
 
   // Walk the eager tree
-  for (let lhs in expression) {
+  for (const lhs in expression) {
     const rhs = expression[lhs];
     debug(`Eager Filter lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-    if (typeof rhs === 'boolean' || typeof rhs === 'string')
-      continue;
+    if (typeof rhs === 'boolean' || typeof rhs === 'string') continue;
 
     // rhs is an object
     const eagerName = rhs.$relation ? `${rhs.$relation} as ${lhs}` : lhs;
@@ -134,8 +133,9 @@ const applyEagerFilter = function(expression = {}, builder, path, utils) {
       expression[lhs] = rhs;
     }
 
-    if (Object.keys(rhs).length > 0)
+    if (Object.keys(rhs).length > 0) {
       applyEagerFilter(rhs, builder, newPath, utils);
+    }
   }
 
   return expression;
@@ -147,8 +147,9 @@ const applyEagerObject = function(expression, builder, utils) {
 };
 
 const applyEager = function (eager, builder, utils) {
-  if (typeof eager === 'object')
+  if (typeof eager === 'object') {
     return applyEagerObject(eager, builder, utils);
+  }
 
   builder.eager(eager);
 };
@@ -176,12 +177,11 @@ const applyRequire = function (filter = {}, builder, utils) {
 
   // If there are no properties at all, just return
   const propertiesSet = getPropertiesFromExpression(filter);
-  if (propertiesSet.length === 0)
-    return builder;
+  if (propertiesSet.length === 0) return builder;
 
   const applyLogicalExpression = iterateLogicalExpression({
-    onExit: function(propertyName, value, builder) {
-      applyPropertyExpression(propertyName, value, builder);
+    onExit: function(propertyName, value, _builder) {
+      applyPropertyExpression(propertyName, value, _builder);
     },
     onLiteral: function() {
       throw new Error('Filter is invalid');
@@ -204,8 +204,7 @@ const applyRequire = function (filter = {}, builder, utils) {
 
     // If there were related properties, join onto the filter
     const joinRelation = createRelationExpression(propertiesSet);
-    if (joinRelation)
-      filterQuery.joinRelation(joinRelation);
+    if (joinRelation) filterQuery.joinRelation(joinRelation);
 
     const filterQueryAlias = 'filter_query';
     builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
@@ -290,9 +289,7 @@ module.exports.applyOrder = applyOrder;
   */
 const selectFields = (fields = [], builder, relationName) => {
   if (fields.length === 0) return;
-
-  if (!relationName)
-    return builder.select(fields);
+  if (!relationName) return builder.select(fields);
 
   builder.modifyEager(relationName, eagerQueryBuilder => {
     eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
@@ -325,8 +322,8 @@ const applyFields = function (fields = [], builder) {
   selectFields(rootFields, builder);
 
   // Related fields
-  _.map(fieldsByRelation, (fields, relationName) => selectFields(
-    fields, builder, relationName
+  _.map(fieldsByRelation, (_fields, relationName) => selectFields(
+    _fields, builder, relationName
   ));
 
   return builder;
@@ -334,10 +331,8 @@ const applyFields = function (fields = [], builder) {
 module.exports.applyFields = applyFields;
 
 const applyLimit = function (limit, offset, builder) {
-  if (limit)
-    builder.limit(limit);
-  if (offset)
-    builder.offset(offset);
+  if (limit) builder.limit(limit);
+  if (offset) builder.offset(offset);
 
   return builder;
 };

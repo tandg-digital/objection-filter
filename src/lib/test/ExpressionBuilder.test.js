@@ -1,8 +1,5 @@
-'use strict';
-
-const _ = require('lodash');
 require('chai').should();
-const expect = require('chai').expect;
+const { expect } = require('chai');
 const {
   createRelationExpression
 } = require('../ExpressionBuilder');

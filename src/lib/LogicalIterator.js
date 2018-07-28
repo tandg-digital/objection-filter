@@ -1,6 +1,7 @@
+const OR = '$or';
+const AND = '$and';
 const _ = require('lodash');
 const { debug } = require('../config');
-const OR = '$or', AND = '$and';
 
 /**
  * If the input is an object, transform it into an array of key:value pairs
@@ -10,10 +11,8 @@ const OR = '$or', AND = '$and';
  * @returns {Array<Object>}
  */
 const arrayize = function(objectOrArray) {
-  if (_.isArray(objectOrArray))
-    return objectOrArray;
-  else
-    return _.toPairs(objectOrArray).map(item => ({ [item[0]]: item[1] }));
+  if (_.isArray(objectOrArray)) return objectOrArray;
+  return _.toPairs(objectOrArray).map(item => ({ [item[0]]: item[1] }));
 };
 
 /**
@@ -24,15 +23,16 @@ const arrayize = function(objectOrArray) {
 const getPropertiesFromExpression = function(expression = {}, test = () => true) {
   let properties = [];
 
-  for (let lhs in expression) {
+  for (const lhs in expression) {
     const rhs = expression[lhs];
 
     if ([OR, AND].includes(lhs)) {
-      for (let subExpression of arrayize(rhs))
+      for (const subExpression of arrayize(rhs)) {
         properties = properties.concat(getPropertiesFromExpression(subExpression, test));
+      }
     } else {
-      if (test(lhs))
-        properties.push(lhs);
+      if (test(lhs)) properties.push(lhs);
+      continue;
     }
   }
 
@@ -77,17 +77,18 @@ const iterateLogicalExpression = function({
 
     builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
       // Assume equality if the target expression is a primitive
-      if (typeof expression !== 'object')
+      if (typeof expression !== 'object') {
         return onLiteral(expression, subQueryBuilder);
+      }
 
-      for (let lhs in expression) {
+      for (const lhs in expression) {
         const rhs = expression[lhs];
         debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
         if ([OR, AND].includes(lhs)) {
           // Wrap nested conditions in their own scope
           subQueryBuilder.where(innerBuilder => {
-            for (let subExpression of arrayize(rhs)) {
+            for (const subExpression of arrayize(rhs)) {
               iterator(
                 subExpression,
                 innerBuilder,
@@ -98,7 +99,7 @@ const iterateLogicalExpression = function({
           });
         } else {
           // The lhs is either a non-logical operator or a property name
-          debug('onExit', propertyTransform(lhs), rhs)
+          debug('onExit', propertyTransform(lhs), rhs);
           onExit(propertyTransform(lhs), rhs, subQueryBuilder);
         }
       }
