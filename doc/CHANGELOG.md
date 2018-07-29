@@ -1,8 +1,14 @@
 # Changelog
 
+### 1.4.0
+
+* Fix bug with [ambiguous column name](https://github.com/tandg-digital/objection-filter/pull/12)
+* Fix bug with [order expression spaces](https://github.com/tandg-digital/objection-filter/pull/11)
+* Tidy up eslint configuration
+
 ### 1.3.0
 
-* Can now use models which have composite id keys
+* Can now use models which have [composite id keys](https://github.com/tandg-digital/objection-filter/pull/10)
 
 ### 1.2.0
 
