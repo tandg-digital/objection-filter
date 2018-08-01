@@ -78,7 +78,7 @@ module.exports = function () {
 
 
       applyFields(fields, this._builder);
-      applyWhere(_.omit(params, ['fields', 'offset', 'limit', 'order', 'require']), this._builder, this.utils);
+      applyWhere(JSON.parse(params.filter), this._builder, this.utils);
       applyRequire(params.require, this._builder, this.utils);
       applyOrder(order, this._builder);
 
