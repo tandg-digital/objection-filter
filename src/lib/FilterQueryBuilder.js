@@ -42,11 +42,11 @@ module.exports = class FilterQueryBuilder {
   }
 
   build(params = {}) {
-    const { fields, limit, offset, order, eager } = params;
+    const { fields, limit, offset, order, eager, filter } = params;
 
     applyFields(fields, this._builder);
     applyWhere(
-      JSON.parse(params.filter),
+      filter ? JSON.parse(filter) : {},
       this._builder,
       this.utils
     );

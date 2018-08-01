@@ -74,11 +74,12 @@ module.exports = function () {
           limit = params.limit,
           offset = params.offset,
           order = params.order,
-          eager = params.eager;
+          eager = params.eager,
+          filter = params.filter;
 
 
       applyFields(fields, this._builder);
-      applyWhere(JSON.parse(params.filter), this._builder, this.utils);
+      applyWhere(filter ? JSON.parse(filter) : {}, this._builder, this.utils);
       applyRequire(params.require, this._builder, this.utils);
       applyOrder(order, this._builder);
 
