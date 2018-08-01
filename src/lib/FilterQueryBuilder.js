@@ -46,7 +46,7 @@ module.exports = class FilterQueryBuilder {
 
     applyFields(fields, this._builder);
     applyWhere(
-      _.omit(params, ['fields', 'offset', 'limit', 'order', 'require']),
+      JSON.parse(params.filter),
       this._builder,
       this.utils
     );
