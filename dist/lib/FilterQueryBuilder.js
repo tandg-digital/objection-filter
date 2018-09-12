@@ -401,7 +401,7 @@ var applyFields = function applyFields() {
 module.exports.applyFields = applyFields;
 
 var applyLimit = function applyLimit(limit, offset, builder) {
-  if (limit && offset) {
+  if (typeof limit === 'number' && typeof offset === 'number') {
     builder.page(parseInt(offset / limit), limit);
     return builder;
   }

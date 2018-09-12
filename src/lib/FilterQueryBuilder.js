@@ -21,7 +21,7 @@ const { sliceRelation, Operations } = require('./utils');
 const { createRelationExpression } = require('./ExpressionBuilder');
 const {
   iterateLogicalExpression,
-  getPropertiesFromExpression,
+  getPropertiesFromExpression
 } = require('./LogicalIterator');
 
 module.exports = class FilterQueryBuilder {
@@ -45,11 +45,7 @@ module.exports = class FilterQueryBuilder {
     const { fields, limit, offset, order, eager, filter } = params;
 
     applyFields(fields, this._builder);
-    applyWhere(
-      filter ? JSON.parse(filter) : {},
-      this._builder,
-      this.utils
-    );
+    applyWhere(filter ? JSON.parse(filter) : {}, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
     applyOrder(order, this._builder);
 
@@ -177,7 +173,7 @@ const applyRequire = function(filter = {}, builder, utils) {
     },
     onLiteral: function() {
       throw new Error('Filter is invalid');
-    },
+    }
   });
   const getFullyQualifiedName = name =>
     sliceRelation(name).fullyQualifiedProperty;
@@ -345,7 +341,7 @@ const applyFields = function(fields = [], builder) {
 module.exports.applyFields = applyFields;
 
 const applyLimit = function(limit, offset, builder) {
-  if (limit && offset) {
+  if (typeof limit === 'number' && typeof offset === 'number') {
     builder.page(parseInt(offset / limit), limit);
     return builder;
   }
