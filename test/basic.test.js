@@ -1,22 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('basic filters', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie, MovieVersion;
+      let session, Person, Movie, MovieVersion;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
         Movie = session.models.Movie;
         MovieVersion = session.models.MovieVersion;
       });
@@ -30,7 +24,7 @@ describe('basic filters', function () {
       });
 
       before(function () {
-        return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
+        return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
       describe('filter attributes', function() {
@@ -40,7 +34,7 @@ describe('basic filters', function () {
               limit: 1
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.should.have.length(1);
               done();
             })
@@ -54,7 +48,7 @@ describe('basic filters', function () {
               offset: 1
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.should.have.length(1);
               result[0].firstName.should.equal('F01');
               done();
@@ -69,7 +63,7 @@ describe('basic filters', function () {
               fields: ['id']
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.should.have.length(1);
               _.keys(result[0]).should.deep.equal(['id']);
               done();
@@ -83,9 +77,9 @@ describe('basic filters', function () {
               order: 'id desc'
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.map(item => item.id).should.deep.equal([
-                10,9,8,7,6,5,4,3,2,1
+                10, 9, 8, 7, 6, 5, 4, 3, 2, 1
               ]);
               done();
             })
@@ -98,9 +92,9 @@ describe('basic filters', function () {
               order: 'id asc'
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.map(item => item.id).should.deep.equal([
-                1,2,3,4,5,6,7,8,9,10
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10
               ]);
               done();
             })
@@ -113,10 +107,38 @@ describe('basic filters', function () {
               order: 'id'
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.map(item => item.id).should.deep.equal([
-                1,2,3,4,5,6,7,8,9,10
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10
               ]);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should order by multiple columns', done => {
+          buildFilter(Movie)
+            .build({
+              order: 'seq,id'
+            })
+            .then(result => {
+              result.map(item => item.id).should.deep.equal(
+                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+              );
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should order by multiple columns with space', done => {
+          buildFilter(Movie)
+            .build({
+              order: 'seq, id'
+            })
+            .then(result => {
+              result.map(item => item.id).should.deep.equal(
+                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+              );
               done();
             })
             .catch(done);
@@ -130,7 +152,7 @@ describe('basic filters', function () {
               eager: 'movies'
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               _.forEach(person => person.movies.should.be.an.array);
               done();
             })
@@ -147,8 +169,8 @@ describe('basic filters', function () {
               _.forEach(result, person => {
                 _.forEach(person.movies, movie => {
                   _.keys(movie).should.deep.equal(['id']);
-                })
-              })
+                });
+              });
               done();
             })
             .catch(done);
@@ -178,12 +200,13 @@ describe('basic filters', function () {
               }
             })
             .then(result => {
-              result.length.should.equal(10); // Should inclue all root models regardless of condition
+              // Should inclue all root models regardless of condition
+              result.length.should.equal(10);
               _.forEach(result, person => {
                 person.movies.forEach(movie => {
                   movie.name.should.equal('M99');
                 });
-              })
+              });
               done();
             })
             .catch(done);
@@ -246,9 +269,9 @@ describe('basic filters', function () {
               limit: 1
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.forEach(person => {
-                [].concat(person.movies.map(movie => movie.id)).sort((a,b) => a > b)
+                [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a > b)
                   .should.deep.equal(
                     person.movies.map(movie => movie.id)
                   );
@@ -266,9 +289,9 @@ describe('basic filters', function () {
               limit: 1
             })
             .then(result => {
-              result.should.be.an.an('array')
+              result.should.be.an.an('array');
               result.forEach(person => {
-                [].concat(person.movies.map(movie => movie.id)).sort((a,b) => a < b)
+                [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a < b)
                   .should.deep.equal(
                     person.movies.map(movie => movie.id)
                   );
@@ -286,7 +309,7 @@ describe('basic filters', function () {
             .build({
               eager: 'movies'
             })
-            .then(result => {
+            .then(() => {
               done(new Error('Eager expression should not be allowed'));
             })
             .catch(err => {

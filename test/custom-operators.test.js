@@ -1,23 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('Custom Operators', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie;
+      let session, Person;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
-        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -32,7 +25,8 @@ describe('Custom Operators', function () {
        * Insert the test data.
        *
        * 10 Persons with names `F00 L09`, `F01 L08`, ...
-       *   The previous person is the parent of the next one (the first person doesn't have a parent).
+       *   The previous person is the parent of the next one
+       *   (the first person doesn't have a parent).
        *
        *   Each person has 10 Pets `P00`, `P01`, `P02`, ...
        *     First person has pets 0 - 9, second 10 - 19 etc.
@@ -54,14 +48,15 @@ describe('Custom Operators', function () {
        * F09 L00 | F08 L01 | P90 - P99 | M09 - M00
        */
       before(function () {
-        return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
+        return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
       it('should create a custom operator', done => {
         const options = {
           operators: {
-            $inCustom: (property, operand, builder) =>
-              builder.where(property, 'in', ['F00'])
+            $inCustom: (property, operand, builder) => {
+              builder.where(property, 'in', ['F00']);
+            }
           }
         };
         buildFilter(Person, null, options)
@@ -71,7 +66,7 @@ describe('Custom Operators', function () {
             }
           })
           .then(result => {
-            result.should.be.an.an('array')
+            result.should.be.an.an('array');
             result.should.have.length(1);
             result[0].firstName.should.equal('F00');
             done();
@@ -80,14 +75,14 @@ describe('Custom Operators', function () {
       });
 
       it('should work with lower() function', done => {
-        const raw = require('objection').raw;
         const options = {
           operators: {
-            $equalsLower: (property, operand, builder) =>
+            $equalsLower: (property, operand, builder) => {
               builder.whereRaw('LOWER(??) = ?', [
                 property,
                 operand.toLowerCase()
-              ])
+              ]);
+            }
           }
         };
         buildFilter(Person, null, options)
@@ -97,7 +92,7 @@ describe('Custom Operators', function () {
             }
           })
           .then(result => {
-            result.should.be.an.an('array')
+            result.should.be.an.an('array');
             result.should.have.length(1);
             result[0].firstName.should.equal('F00');
             done();
@@ -108,8 +103,9 @@ describe('Custom Operators', function () {
       it('should override existing operator', done => {
         const options = {
           operators: {
-            $in: (property, operand, builder) =>
-              builder.where(property, '=', 'F00')
+            $in: (property, operand, builder) => {
+              builder.where(property, '=', 'F00');
+            }
           }
         };
         buildFilter(Person, null, options)
@@ -119,7 +115,7 @@ describe('Custom Operators', function () {
             }
           })
           .then(result => {
-            result.should.be.an.an('array')
+            result.should.be.an.an('array');
             result.should.have.length(1);
             result[0].firstName.should.equal('F00');
             done();
@@ -130,8 +126,9 @@ describe('Custom Operators', function () {
       it('should work alongside default operators', done => {
         const options = {
           operators: {
-            $inCustom: (property, operand, builder) =>
-            builder.where(property, 'in', ['F00'])
+            $inCustom: (property, operand, builder) => {
+              builder.where(property, 'in', ['F00']);
+            }
           }
         };
         buildFilter(Person, null, options)
@@ -142,7 +139,7 @@ describe('Custom Operators', function () {
             }
           })
           .then(result => {
-            result.should.be.an.an('array')
+            result.should.be.an.an('array');
             result.should.have.length(1);
             result[0].firstName.should.equal('F00');
             done();

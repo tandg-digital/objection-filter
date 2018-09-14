@@ -1,6 +1,6 @@
 {
   "name": "objection-filter",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "engines": {
@@ -41,7 +41,8 @@
     "coveralls": "^2.13.1",
     "cross-env": "^5.1.3",
     "eslint": "^4.18.0",
-    "eslint-plugin-node": "^6.0.0",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0",
     "knex": "^0.14.4",
     "mocha": "^3.5.0",
     "nyc": "^11.1.0",

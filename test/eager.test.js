@@ -1,23 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('eager object notation', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie;
+      let session, Person;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
-        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -29,7 +22,7 @@ describe('eager object notation', function () {
       });
 
       before(function () {
-        return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
+        return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
       describe('$where on root model', function() {
@@ -177,8 +170,7 @@ describe('eager object notation', function () {
               ).should.deep.equal(['M99']);
               _.flatten(
                 _.map(result, 'pets')
-              )
-              .length.should.be.greaterThan(0);
+              ).length.should.be.greaterThan(0);
               done();
             })
             .catch(done);
@@ -248,7 +240,7 @@ describe('eager object notation', function () {
                   firstName: 'F00'
                 }
               }
-            })
+            });
           result.map(item => item.firstName).should.deep.equal([
             'F00'
           ]);
@@ -263,7 +255,7 @@ describe('eager object notation', function () {
                   lastName: 'L09'
                 }
               }
-            })
+            });
           result.map(item => item.firstName).should.deep.equal([
             'F00'
           ]);
@@ -284,7 +276,7 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
+            });
           result.length.should.equal(10);
           _.map(
             _.flatten(
@@ -315,6 +307,23 @@ describe('eager object notation', function () {
               eager: {
                 $where: {
                   'movies.name': 'M00',
+                  'pets.name': 'P90'
+                }
+              }
+            });
+          result.map(item => item.firstName).should.deep.equal([
+            'F09'
+          ]);
+        });
+
+        it('should filter using root field', async function() {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $where: {
+                  id: {
+                    $gt: 0
+                  },
                   'pets.name': 'P90'
                 }
               }
@@ -372,7 +381,7 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
+            });
           result.length.should.equal(10);
           _.map(
             _.flatten(
@@ -394,7 +403,7 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
+            });
           result.length.should.equal(10);
           _.map(
             _.flatten(
@@ -418,7 +427,7 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
+            });
           result.length.should.equal(10);
           _.map(
             _.flatten(

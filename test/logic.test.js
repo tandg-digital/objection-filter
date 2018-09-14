@@ -1,23 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('logical expression filters', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie;
+      let session, Person;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
-        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -29,7 +22,7 @@ describe('logical expression filters', function () {
       });
 
       before(function () {
-        return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
+        return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
       describe('require using $or', function() {
@@ -37,7 +30,7 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$or': [
+                $or: [
                   { 'movies.name': 'M00' },
                   { 'movies.name': 'M10' }
                 ]
@@ -56,12 +49,14 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$or': [
+                $or: [
                   { 'movies.name': 'M00' },
-                  { '$or': [
-                    { 'movies.name': 'M10' },
-                    { 'movies.name': 'M20' },
-                  ] }
+                  {
+                    $or: [
+                      { 'movies.name': 'M10' },
+                      { 'movies.name': 'M20' },
+                    ]
+                  }
                 ]
               }
             })
@@ -78,7 +73,7 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$or': {
+                $or: {
                   'movies.name': 'M00',
                   'movies.code': 'C08'
                 }
@@ -97,20 +92,20 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$or': [
+                $or: [
                   {
                     'movies.name': {
-                      '$or': [
-                        { '$equals': 'M00' },
-                        { '$equals': 'M10' }
+                      $or: [
+                        { $equals: 'M00' },
+                        { $equals: 'M10' }
                       ]
                     }
                   },
                   {
                     'movies.name': {
-                      '$or': [
-                        { '$equals': 'M20' },
-                        { '$equals': 'M30' }
+                      $or: [
+                        { $equals: 'M20' },
+                        { $equals: 'M30' }
                       ]
                     }
                   }
@@ -166,7 +161,7 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$and': [
+                $and: [
                   { 'movies.name': 'M00' },
                   { 'movies.code': 'C09' }
                 ]
@@ -208,7 +203,7 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$and': {
+                $and: {
                   'movies.name': 'M00',
                   'movies.code': 'C09'
                 }
@@ -324,7 +319,7 @@ describe('logical expression filters', function () {
         });
       });
 
-      describe('require using combinations of $or/$and after the propertyName', done => {
+      describe('require using combinations of $or/$and after the propertyName', () => {
         it('should filter using top level $and with nested $or', done => {
           buildFilter(Person)
             .build({
@@ -420,33 +415,33 @@ describe('logical expression filters', function () {
           buildFilter(Person)
             .build({
               require: {
-                '$gt': 1
+                $gt: 1
               }
             })
             .then(() => done(validationError))
-            .catch(err => done());
+            .catch(() => done());
         });
 
         it('should throw an error on early literal', done => {
           buildFilter(Person)
             .build({
               require: {
-                '$or': [ 'invalid' ]
+                $or: ['invalid']
               }
             })
             .then(() => done(validationError))
-            .catch(err => done());
+            .catch(() => done());
         });
 
         it('should throw an error on early operator', done => {
           buildFilter(Person)
             .build({
               require: {
-                '$or': [{ '$gt': 1 }]
+                $or: [{ $gt: 1 }]
               }
             })
             .then(() => done(validationError))
-            .catch(err => done());
+            .catch(() => done());
         });
       });
     });

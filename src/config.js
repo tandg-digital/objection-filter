@@ -1,3 +1,3 @@
-module.exports = {
-  debug: require('debug')('objection:filter')
-};
+const debug = require('debug')('objection:filter');
+
+module.exports = { debug };

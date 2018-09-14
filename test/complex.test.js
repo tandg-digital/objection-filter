@@ -1,23 +1,16 @@
-'use strict';
-
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
 describe('complex filters', function () {
-
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
-
     describe(knexConfig.client, function() {
-      var session, knex, Person, Animal, Movie;
+      let session, Person;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
-        knex = session.knex;
         Person = session.models.Person;
-        Animal = session.models.Animal;
-        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -29,7 +22,7 @@ describe('complex filters', function () {
       });
 
       before(function () {
-        return testUtils.insertData(session, {persons: 10, pets: 10, movies: 10});
+        return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
       describe('edge cases', function() {
@@ -39,7 +32,7 @@ describe('complex filters', function () {
             .then(result => {
               result.length.should.equal(10);
               result.map(item => item.firstName).should.deep.equal([
-                'F00','F01','F02','F03','F04','F05','F06','F07','F08','F09'
+                'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
               ]);
               done();
             })
@@ -59,7 +52,7 @@ describe('complex filters', function () {
             .then(result => {
               result.length.should.equal(10);
               result.map(item => item.firstName).should.deep.equal([
-                'F00','F01','F02','F03','F04','F05','F06','F07','F08','F09'
+                'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
               ]);
               done();
             })
@@ -198,7 +191,7 @@ describe('complex filters', function () {
             .then(result => {
               result.length.should.equal(1);
               const person = result[0];
-              person.firstName.should.equal('F00')
+              person.firstName.should.equal('F00');
               done();
             })
             .catch(done);
@@ -217,7 +210,7 @@ describe('complex filters', function () {
             .then(result => {
               result.length.should.equal(5);
               result.map(item => item.firstName).should.deep.equal([
-                'F05','F06','F07','F08','F09'
+                'F05', 'F06', 'F07', 'F08', 'F09'
               ]);
               done();
             })
@@ -236,7 +229,7 @@ describe('complex filters', function () {
             .then(result => {
               result.length.should.equal(5);
               result.map(item => item.firstName).should.deep.equal([
-                'F00','F01','F02','F03','F04'
+                'F00', 'F01', 'F02', 'F03', 'F04'
               ]);
               done();
             })
@@ -287,7 +280,7 @@ describe('complex filters', function () {
               eager: 'movies',
               require: {
                 'movies.id': {
-                  $in: [ 88, 98 ]
+                  $in: [88, 98]
                 }
               }
             })
@@ -309,9 +302,9 @@ describe('complex filters', function () {
               eager: 'movies',
               require: {
                 'movies.name': {
-                  '$or': [
-                    { '$like': 'M99' },
-                    { '$like': 'M89'}
+                  $or: [
+                    { $like: 'M99' },
+                    { $like: 'M89' }
                   ]
                 }
               }
@@ -331,9 +324,9 @@ describe('complex filters', function () {
               eager: 'movies',
               require: {
                 'movies.name': {
-                  '$or': [
-                    { '$like': 'M99' },
-                    { '$equals': 'M89'}
+                  $or: [
+                    { $like: 'M99' },
+                    { $equals: 'M89' }
                   ]
                 }
               }
@@ -353,7 +346,7 @@ describe('complex filters', function () {
               eager: 'movies',
               require: {
                 'movies.name': {
-                  '$or': [
+                  $or: [
                     'M99',
                     'M89'
                   ]
@@ -375,7 +368,7 @@ describe('complex filters', function () {
               eager: 'movies',
               require: {
                 'movies.name': {
-                  '$or': []
+                  $or: []
                 }
               }
             })
@@ -395,7 +388,7 @@ describe('complex filters', function () {
             .build({
               eager: 'movies',
               where: {
-               'movies.name': 'M09'
+                'movies.name': 'M09'
               },
               require: {
                 'movies.name': 'M09'

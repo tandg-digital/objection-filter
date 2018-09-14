@@ -1,15 +1,33 @@
 {
-  "plugins": ["node"],
-  "extends": ["eslint:recommended", "plugin:node/recommended"],
+  "extends": "airbnb-base",
+  "plugins": [],
   "rules": {
-    "node/exports-style": ["error", "module.exports"],
-    "no-unused-vars": 0,
-    "node/no-unpublished-require": 0,
-    "no-undef": 1,
-    "no-console": 0
+    "max-len": "error",
+    "no-underscore-dangle": "off",
+    "comma-dangle": "off",
+    "space-before-function-paren": "off",
+    "func-names": "off",
+    "object-shorthand": "off",
+    "prefer-arrow-callback": "off",
+    "consistent-return": "off",
+    "no-use-before-define": "off",
+
+    "guard-for-in": "off",
+    "no-restricted-syntax": "off",
+    "no-continue": "off",
+    "prefer-template": "off",
+    "newline-per-chained-call": "off",
+    "linebreak-style": "off",
+    "arrow-parens": "off",
+    "no-unused-expressions": "off",
+    "no-param-reassign": "off",
+    "no-nested-ternary": "off",
+    "one-var-declaration-per-line": "off",
+    "one-var": "off",
+    "prefer-destructuring": "off"
   },
   "env": {
-     "node": true,
-     "mocha": true
+    "node": true,
+    "mocha": true
   }
 }

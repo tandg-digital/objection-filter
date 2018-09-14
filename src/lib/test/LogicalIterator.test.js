@@ -1,8 +1,4 @@
-'use strict';
-
-const _ = require('lodash');
 require('chai').should();
-const expect = require('chai').expect;
 const {
   getPropertiesFromExpression
 } = require('../LogicalIterator');
