@@ -246,6 +246,19 @@ function createModels(knex) {
     static get tableName() {
       return 'Animal';
     }
+
+    static get relationMappings() {
+      return {
+        owner: {
+          relation: objection.BelongsToOneRelation,
+          modelClass: Person,
+          join: {
+            from: 'Animal.ownerId',
+            to: 'Person.id'
+          }
+        }
+      };
+    }
   }
 
   class Movie extends objection.Model {
