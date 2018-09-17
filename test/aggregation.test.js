@@ -3,6 +3,23 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+/**
+ * Create an array of items composed of counts = [n0, n1, n2...] with items
+ * from the corresponding index of the objects list
+ * fillArray([2, 3], [0, 1]) = [0,0,1,1,1]
+ * @param {Array<Integer>} counts
+ * @param {Array<any>} objects
+ */
+const fillArray = function(counts = [], objects = []) {
+  const results = [];
+  for (let i = 0; i < counts.length; i += 1) {
+    for (let j = 0; j < counts[i]; j += 1) {
+      results.push(objects[i]);
+    }
+  }
+  return results;
+};
+
 describe('aggregation', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
@@ -26,41 +43,6 @@ describe('aggregation', function () {
         return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
-      describe('count with filters', function() {
-        it('should count using 1-level manyToMany', done => {
-          buildFilter(Person)
-            .build({
-              eager: {
-                $aggregations: [
-                  {
-                    type: 'count',
-                    relation: 'movies',
-                    $where: {
-                      'category.id': { $gt: 2 }
-                    }
-                  }
-                ]
-              }
-            })
-            .then(result => {
-              result.map(item => item.count).should.deep.equal([
-                0,
-                0,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10
-              ]);
-              done();
-            })
-            .catch(done);
-        });
-      });
-
       describe('count without filters', function() {
         it('should count using 1-level hasMany', done => {
           buildFilter(Person)
@@ -75,18 +57,7 @@ describe('aggregation', function () {
               }
             })
             .then(result => {
-              result.map(item => item.count).should.deep.equal([
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10
-              ]);
+              result.map(item => item.count).should.deep.equal(fillArray([10], [10]));
               done();
             })
             .catch(done);
@@ -105,18 +76,7 @@ describe('aggregation', function () {
               }
             })
             .then(result => {
-              result.map(item => item.count).should.deep.equal([
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10,
-                10
-              ]);
+              result.map(item => item.count).should.deep.equal(fillArray([10], [10]));
               done();
             })
             .catch(done);
@@ -210,6 +170,32 @@ describe('aggregation', function () {
         });
       });
 
+      describe('count with filters', function() {
+        it('should count using 1-level manyToMany', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    relation: 'movies',
+                    $where: {
+                      'category.id': { $gt: 2 }
+                    }
+                  }
+                ]
+              }
+            })
+            .then(result => {
+              result.map(item => item.count).should.deep.equal(
+                fillArray([2, 8], [0, 10])
+              );
+              done();
+            })
+            .catch(done);
+        });
+      });
+
       describe('count distinct', function() {
         it('should apply 3-level relation', done => {
           buildFilter(Animal)
@@ -252,11 +238,7 @@ describe('aggregation', function () {
             .then(result => {
               const counts = result.map(item => item.count);
               counts.length.should.equal(100);
-              const ones = [];
-              for (let i = 0; i < 100; i += 1) {
-                ones.push(i < 10 ? 1 : 0);
-              }
-              counts.should.deep.equal(ones);
+              counts.should.deep.equal(fillArray([10, 90], [1, 0]));
               done();
             })
             .catch(done);
@@ -284,11 +266,7 @@ describe('aggregation', function () {
             })
             .then(result => {
               const counts = result.map(({ count1, count2 }) => ({ count1, count2 }));
-              const stub = [];
-              for (let i = 0; i < 100; i += 1) {
-                stub.push({ count1: 1, count2: 10 });
-              }
-              counts.should.deep.equal(stub);
+              counts.should.deep.equal(fillArray([100], [{ count1: 1, count2: 10 }]));
               done();
             })
             .catch(done);
@@ -323,6 +301,45 @@ describe('aggregation', function () {
             })
             .catch(done);
         });
+      });
+
+      describe('alternate aggregations', function() {
+        it('should apply sum', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'sum',
+                    field: 'id',
+                    relation: 'movies'
+                  }
+                ]
+              }
+            })
+            .then(result => {
+              const counts = result.map(item => item.count);
+              counts.length.should.equal(10);
+              counts.should.deep.equal([
+                55,
+                155,
+                255,
+                355,
+                455,
+                555,
+                655,
+                755,
+                855,
+                955
+              ]);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should throw an error with unspecified field');
+
+        it('should throw an error with an invalid type');
       });
 
       describe('integration', function() {
