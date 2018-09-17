@@ -108,9 +108,13 @@ const getOuterModel = function(builder, relation) {
  * @param {String} alias
  */
 const nullToZero = function(knex, tableAlias, columnAlias = 'count') {
-  return knex.raw(`cast(case when "${tableAlias}"."${columnAlias}" is null then 0 `
-  + `else "${tableAlias}"."${columnAlias}" end as int) as "${columnAlias}"`);
+  const column = `${tableAlias}.${columnAlias}`;
+  return knex.raw('cast(case when ?? is null then 0 '
+  + 'else ?? end as int) as ??', [column, column, columnAlias]);
 };
+
+// A list of allowed aggregation functions
+const aggregationFunctions = ['count', 'sum', 'min', 'max', 'avg'];
 
 const buildAggregation = function(aggregation, builder, utils) {
   const Model = builder.modelClass();
@@ -119,8 +123,19 @@ const buildAggregation = function(aggregation, builder, utils) {
     relation,
     $where,
     distinct = false,
-    alias: columnAlias = 'count'
+    alias: columnAlias = 'count',
+    type = 'count',
+    field
   } = aggregation;
+
+  // Do some initial validation
+  if (!aggregationFunctions.includes(type)) {
+    throw new Error(`Invalid type [${type}] for aggregation`);
+  }
+  if (type !== 'count' && !field) {
+    throw new Error(`Must specify "field" with [${type}] aggregation`);
+  }
+
   const baseIdColumn = Model.tableName + '.' + Model.idColumn;
 
   // When joining the filter query, the base left-joined table is aliased
@@ -144,8 +159,8 @@ const buildAggregation = function(aggregation, builder, utils) {
   const aggregationQuery = Model
     .query()
     .select(baseIdColumn)
-    .select(knex.raw(`count(${distinctTag} ??) as ??`, [
-      `${fullOuterRelation}.${OuterModel.idColumn}`,
+    .select(knex.raw(`${type}(${distinctTag}??) as ??`, [
+      `${fullOuterRelation}.${field || OuterModel.idColumn}`,
       columnAlias
     ]))
     .leftJoinRelation(relation);
@@ -410,16 +425,18 @@ module.exports.applyOrder = applyOrder;
   */
 const selectFields = (fields = [], builder, relationName) => {
   if (fields.length === 0) return;
+  const { raw } = builder.modelClass().knex();
   // HACK: sqlite incorrect column alias when selecting 1 column
+  // TODO: investigate sqlite column aliasing on eager models
   if (fields.length === 1 && !relationName) {
-    const [tableName, field] = fields[0].split('.');
-    const { raw } = builder.modelClass().knex();
+    const field = fields[0].split('.')[1];
     return builder.select(raw('?? as ??', [fields[0], field]));
   }
   if (!relationName) return builder.select(fields);
 
   builder.modifyEager(relationName, eagerQueryBuilder => {
-    eagerQueryBuilder.select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
+    eagerQueryBuilder
+      .select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
   });
 };
 
