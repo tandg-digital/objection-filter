@@ -88,7 +88,7 @@ module.exports = {
       .createTable('Movie_Version', function (table) {
         table.biginteger('movieId').unsigned().references('Movie.id').index();
         table.integer('version').index();
-        table.primary(['movieId', 'version']);
+        table.unique(['movieId', 'version']);
       })
       .then(function () {
         if (session.config.client === 'postgres') {
