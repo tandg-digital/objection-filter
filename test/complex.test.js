@@ -312,7 +312,7 @@ describe('complex filters', function () {
               }
             })
             .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
+              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
                 'F00', 'F01'
               ]);
               done();
@@ -334,7 +334,7 @@ describe('complex filters', function () {
               }
             })
             .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
+              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
                 'F00', 'F01'
               ]);
               done();

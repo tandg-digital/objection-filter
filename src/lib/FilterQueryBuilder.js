@@ -109,8 +109,8 @@ const getOuterModel = function(builder, relation) {
  */
 const nullToZero = function(knex, tableAlias, columnAlias = 'count') {
   const column = `${tableAlias}.${columnAlias}`;
-  return knex.raw('cast(case when ?? is null then 0 '
-  + 'else ?? end as int) as ??', [column, column, columnAlias]);
+  return knex.raw('case when ?? is null then 0 '
+  + 'else cast(?? as decimal) end as ??', [column, column, columnAlias]);
 };
 
 // A list of allowed aggregation functions
@@ -193,9 +193,7 @@ const applyAggregations = function(aggregations = [], builder, utils) {
     aggregation => buildAggregation(aggregation, builder, utils)
   );
 
-  const fullAlias = 'full_query';
-  // Alias the cte as the model's table name
-  builder.from(knex.raw('?? ??', [fullAlias, Model.tableName]));
+  // Create a replicated subquery equivalent to the base model + aggregations
   const fullQuery = Model.query()
     .select(Model.tableName + '.*');
 
@@ -204,18 +202,15 @@ const applyAggregations = function(aggregations = [], builder, utils) {
     const nullToZeroStatement = nullToZero(knex, aggAlias(i), aggregations[i].alias);
     fullQuery
       .select(nullToZeroStatement)
-      .leftJoin(aggAlias(i), function() {
+      .leftJoin(query.as(aggAlias(i)), function() {
         fullIdColumns.forEach((fullIdColumn, j) => {
           this.on(fullIdColumn, '=', `${aggAlias(i)}.${idColumns[j]}`);
         });
       });
-
-    // Append the aggregation cte
-    builder.with(aggAlias(i), query);
   });
 
   // Finally, build the base query
-  builder.with(fullAlias, fullQuery);
+  builder.from(fullQuery.as(Model.tableName));
 };
 
 /**

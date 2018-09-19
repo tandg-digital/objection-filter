@@ -6,7 +6,8 @@ const Promise = require('bluebird');
 const objection = require('objection');
 const pg = require('pg');
 
-pg.types.setTypeParser(20, 'text', parseInt);
+pg.types.setTypeParser(1700, 'text', parseFloat); // DECIMAL
+pg.types.setTypeParser(20, 'text', parseInt); // BIGINT
 const getNumber = s => s.replace(/^\D*/, '');
 
 module.exports = {

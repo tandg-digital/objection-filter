@@ -346,7 +346,29 @@ describe('aggregation', function () {
       });
 
       describe('integration', function() {
-
+        it('should apply distinct with filter', done => {
+          buildFilter(Animal)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    distinct: true,
+                    relation: 'owner.movies.category'
+                  }
+                ],
+                $where: {
+                  id: 1
+                }
+              }
+            })
+            .then(result => {
+              const counts = result.map(item => item.count);
+              counts.should.deep.equal([1]);
+              done();
+            })
+            .catch(done);
+        });
       });
     });
   });
