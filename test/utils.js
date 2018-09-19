@@ -8,7 +8,7 @@ const pg = require('pg');
 
 pg.types.setTypeParser(1700, 'text', parseFloat); // DECIMAL
 pg.types.setTypeParser(20, 'text', parseInt); // BIGINT
-const getNumber = s => s.replace(/^\D*/, '');
+const getNumber = s => parseInt(s.replace(/^\D*/, ''), 10);
 
 module.exports = {
   testDatabaseConfigs: [{
@@ -40,8 +40,8 @@ module.exports = {
     }
   }],
 
-  NUMERIC_SORT: (a, b) => a > b,
-  STRING_SORT: (a, b) => getNumber(a) > getNumber(b),
+  NUMERIC_SORT: (a, b) => a - b,
+  STRING_SORT: (a, b) => getNumber(a) - getNumber(b),
 
   initialize: function (knexConfig) {
     const knex = Knex(knexConfig);
