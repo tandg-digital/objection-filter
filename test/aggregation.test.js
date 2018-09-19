@@ -3,6 +3,8 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+const { NUMERIC_SORT } = testUtils;
+
 /**
  * Create an array of items composed of counts = [n0, n1, n2...] with items
  * from the corresponding index of the objects list
@@ -76,7 +78,8 @@ describe('aggregation', function () {
               }
             })
             .then(result => {
-              result.map(item => item.count).should.deep.equal(fillArray([10], [10]));
+              result.map(item => item.count).sort(NUMERIC_SORT)
+                .should.deep.equal(fillArray([10], [10]));
               done();
             })
             .catch(done);
@@ -187,7 +190,7 @@ describe('aggregation', function () {
               }
             })
             .then(result => {
-              result.map(item => item.count).should.deep.equal(
+              result.map(item => item.count).sort(NUMERIC_SORT).should.deep.equal(
                 fillArray([2, 8], [0, 10])
               );
               done();
@@ -320,7 +323,7 @@ describe('aggregation', function () {
             .then(result => {
               const counts = result.map(item => item.count);
               counts.length.should.equal(10);
-              counts.should.deep.equal([
+              counts.sort(NUMERIC_SORT).should.deep.equal([
                 55,
                 155,
                 255,

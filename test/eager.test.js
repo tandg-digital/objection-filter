@@ -3,6 +3,8 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+const { STRING_SORT } = testUtils;
+
 describe('eager object notation', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
@@ -88,7 +90,7 @@ describe('eager object notation', function () {
                 _.flatten(
                   _.map(result, 'movies')
                 ), 'name'
-              ).should.deep.equal(['M98', 'M99']);
+              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
               done();
             })
             .catch(done);
@@ -118,7 +120,7 @@ describe('eager object notation', function () {
                 _.flatten(
                   _.map(result, 'movies')
                 ), 'name'
-              ).should.deep.equal(['M98', 'M99']);
+              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
               done();
             })
             .catch(done);

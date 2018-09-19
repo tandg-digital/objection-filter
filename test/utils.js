@@ -4,6 +4,10 @@ const path = require('path');
 const Knex = require('knex');
 const Promise = require('bluebird');
 const objection = require('objection');
+const pg = require('pg');
+
+pg.types.setTypeParser(20, 'text', parseInt);
+const getNumber = s => s.replace(/^\D*/, '');
 
 module.exports = {
   testDatabaseConfigs: [{
@@ -34,6 +38,9 @@ module.exports = {
       max: 10
     }
   }],
+
+  NUMERIC_SORT: (a, b) => a > b,
+  STRING_SORT: (a, b) => getNumber(a) > getNumber(b),
 
   initialize: function (knexConfig) {
     const knex = Knex(knexConfig);
