@@ -45,7 +45,7 @@ module.exports = class FilterQueryBuilder {
     const { fields, limit, offset, order, eager, filter } = params;
 
     applyFields(fields, this._builder);
-    applyWhere(filter ? JSON.parse(filter) : {}, this._builder, this.utils);
+    applyWhere(filter || {}, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
     applyOrder(order, this._builder);
 
