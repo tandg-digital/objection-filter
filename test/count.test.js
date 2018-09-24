@@ -155,6 +155,28 @@ describe('count queries', function () {
           })
           .catch(done);
       });
+      it('should count with an eager.$where and limit', done => {
+        const builder = buildFilter(Person);
+        const query = builder.build({
+          limit: 1,
+          eager: {
+            $where: {
+              'movies.name': { $in: ['M00', 'M10'] }
+            },
+            movies: true
+          }
+        });
+        query
+          .then(result => {
+            result.length.should.equal(1);
+            return builder.count();
+          })
+          .then(count => {
+            count.should.equal(2);
+            done();
+          })
+          .catch(done);
+      });
     });
   });
 });
