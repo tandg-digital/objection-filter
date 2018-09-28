@@ -58,11 +58,8 @@ module.exports = class FilterQueryBuilder {
     applyFields(fields, this._builder);
     applyWhere(params.where, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
+
     applyOrder(order, this._builder);
-
-    // Clone the query before adding pagination functions in case of counting
-    this.countQuery = this._builder.clone();
-
     applyEager(eager, this._builder, this.utils);
     applyLimit(limit, offset, this._builder);
 
@@ -70,12 +67,12 @@ module.exports = class FilterQueryBuilder {
   }
 
   count() {
-    const query = this
-      .countQuery
+    return this._builder.clone()
+      .clear(/orderBy|offset|limit/)
+      .clearEager()
       .count('* AS count')
+      .pluck('count')
       .first();
-
-    return query.then(result => result.count);
   }
 
   /**
