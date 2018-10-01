@@ -42,7 +42,7 @@ module.exports = class FilterQueryBuilder {
   }
 
   build(params = {}) {
-    const { fields, limit, offset, order, eager, filter } = params;
+    const { fields, limit, offset, order, includes, filter } = params;
 
     applyFields(fields, this._builder);
     applyWhere(filter || {}, this._builder, this.utils);
@@ -52,7 +52,7 @@ module.exports = class FilterQueryBuilder {
     // Clone the query before adding pagination functions in case of counting
     // this.countQuery = this._builder.clone();
 
-    // applyEager(eager, this._builder, this.utils);
+    applyEager(includes, this._builder, this.utils);
     applyLimit(limit, offset, this._builder);
 
     return this._builder;
@@ -139,7 +139,7 @@ const applyEagerObject = function(expression, builder, utils) {
 const applyEager = function(eager, builder, utils) {
   if (typeof eager === 'object') return applyEagerObject(eager, builder, utils);
 
-  builder.eager(eager);
+  builder.eager(`[${eager}]`);
 };
 module.exports.applyEager = applyEager;
 

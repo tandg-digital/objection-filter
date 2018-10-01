@@ -74,7 +74,7 @@ module.exports = function () {
           limit = params.limit,
           offset = params.offset,
           order = params.order,
-          eager = params.eager,
+          includes = params.includes,
           filter = params.filter;
 
 
@@ -86,7 +86,7 @@ module.exports = function () {
       // Clone the query before adding pagination functions in case of counting
       // this.countQuery = this._builder.clone();
 
-      // applyEager(eager, this._builder, this.utils);
+      applyEager(includes, this._builder, this.utils);
       applyLimit(limit, offset, this._builder);
 
       return this._builder;
@@ -183,7 +183,7 @@ var applyEagerObject = function applyEagerObject(expression, builder, utils) {
 var applyEager = function applyEager(eager, builder, utils) {
   if ((typeof eager === 'undefined' ? 'undefined' : _typeof(eager)) === 'object') return applyEagerObject(eager, builder, utils);
 
-  builder.eager(eager);
+  builder.eager('[' + eager + ']');
 };
 module.exports.applyEager = applyEager;
 
