@@ -285,7 +285,7 @@ var applyWhere = function applyWhere() {
 
     if (!relationName) {
       // Root level where should include the root table name
-      var fullyQualifiedProperty = Model.tableName + '.' + propertyName;
+      var fullyQualifiedProperty = '' + propertyName;
       return applyPropertyExpression(fullyQualifiedProperty, andExpression, builder);
     }
 

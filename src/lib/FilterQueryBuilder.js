@@ -228,7 +228,7 @@ const applyWhere = function(filter = {}, builder, utils) {
 
     if (!relationName) {
       // Root level where should include the root table name
-      const fullyQualifiedProperty = `${Model.tableName}.${propertyName}`;
+      const fullyQualifiedProperty = `${propertyName}`;
       return applyPropertyExpression(
         fullyQualifiedProperty,
         andExpression,
