@@ -21,9 +21,9 @@ const sliceRelation = (relatedProperty, delimiter = '.') => {
 
   // Nested relations need to be in the format a:b:c.name
   // https://github.com/Vincit/objection.js/issues/363
-  const fullyQualifiedProperty = relationName ?
-    `${relationName.replace(/\./g, ':')}.${propertyName}` :
-    propertyName;
+  const fullyQualifiedProperty = relationName
+    ? `${relationName.replace(/\./g, ':')}.${propertyName}`
+    : propertyName;
 
   return { propertyName, relationName, fullyQualifiedProperty };
 };
@@ -36,25 +36,21 @@ module.exports.sliceRelation = sliceRelation;
  */
 module.exports.Operations = function(options) {
   const defaultOperators = {
-    $like: (property, operand, builder) => builder
-      .where(property, 'like', operand),
-    $lt: (property, operand, builder) => builder
-      .where(property, '<', operand),
-    $gt: (property, operand, builder) => builder
-      .where(property, '>', operand),
-    $lte: (property, operand, builder) => builder
-      .where(property, '<=', operand),
-    $gte: (property, operand, builder) => builder
-      .where(property, '>=', operand),
-    $equals: (property, operand, builder) => builder
-      .where(property, operand),
-    '=': (property, operand, builder) => builder
-      .where(property, operand),
-    $in: (property, operand, builder) => builder
-      .where(property, 'in', operand),
-    $exists: (property, operand, builder) => operand ?
-      builder.whereNotNull(property) :
-      builder.whereNull(property),
+    $like: (property, operand, builder) =>
+      builder.where(property, 'like', operand),
+    $lt: (property, operand, builder) => builder.where(property, '<', operand),
+    $gt: (property, operand, builder) => builder.where(property, '>', operand),
+    $lte: (property, operand, builder) =>
+      builder.where(property, '<=', operand),
+    $gte: (property, operand, builder) =>
+      builder.where(property, '>=', operand),
+    $equals: (property, operand, builder) => builder.where(property, operand),
+    '=': (property, operand, builder) => builder.where(property, operand),
+    $in: (property, operand, builder) => builder.where(property, 'in', operand),
+    $exists: (property, operand, builder) =>
+      operand ? builder.whereNotNull(property) : builder.whereNull(property),
+    $all: (property, operand, builder) =>
+      builder.whereJsonSupersetOf(property, operand),
     /**
      * @param {String} property
      * @param {Array} items Must be an array of objects/values
@@ -107,13 +103,11 @@ module.exports.Operations = function(options) {
    * @param {Object} expression
    * @param {QueryBuilder} builder
    */
-  const applyPropertyExpression = function(
-    propertyName,
-    expression,
-    builder
-  ) {
+  const applyPropertyExpression = function(propertyName, expression, builder) {
     debug(
-      `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
+      `Handling property[${propertyName}] expression[${JSON.stringify(
+        expression
+      )}]`
     );
 
     // If the rhs is a primitive, assume equality

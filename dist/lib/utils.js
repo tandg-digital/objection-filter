@@ -73,6 +73,9 @@ module.exports.Operations = function (options) {
     $exists: function $exists(property, operand, builder) {
       return operand ? builder.whereNotNull(property) : builder.whereNull(property);
     },
+    $all: function $all(property, operand, builder) {
+      return builder.whereJsonSupersetOf(property, operand);
+    },
     /**
      * @param {String} property
      * @param {Array} items Must be an array of objects/values
