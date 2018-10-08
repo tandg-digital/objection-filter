@@ -276,9 +276,7 @@ const applyOrder = function(order, builder) {
 
     // For now, only allow sub-query ordering of eager expressions
     builder.modifyEager(relationName, eagerBuilder => {
-      const fullyQualifiedColumn = `${
-        eagerBuilder.modelClass().tableName
-      }.${propertyName}`;
+      const fullyQualifiedColumn = `${propertyName}`;
       eagerBuilder.orderBy(fullyQualifiedColumn, direction);
     });
   });
