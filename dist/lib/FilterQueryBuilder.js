@@ -1,7 +1,5 @@
 'use strict';
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -73,7 +71,7 @@ module.exports = function () {
       var fields = params.fields,
           limit = params.limit,
           offset = params.offset,
-          order = params.order,
+          orderBy = params.orderBy,
           includes = params.includes,
           filter = params.filter;
 
@@ -81,7 +79,7 @@ module.exports = function () {
       applyFields(fields, this._builder);
       applyWhere(filter || {}, this._builder, this.utils);
       applyRequire(params.require, this._builder, this.utils);
-      applyOrder(order, this._builder);
+      applyOrder(orderBy, this._builder);
 
       // Clone the query before adding pagination functions in case of counting
       // this.countQuery = this._builder.clone();
@@ -312,11 +310,13 @@ var applyOrder = function applyOrder(order, builder) {
   var Model = builder.modelClass();
 
   order.split(',').forEach(function (orderStatement) {
-    var _orderStatement$split = orderStatement.split(' '),
-        _orderStatement$split2 = _slicedToArray(_orderStatement$split, 2),
-        orderProperty = _orderStatement$split2[0],
-        _orderStatement$split3 = _orderStatement$split2[1],
-        direction = _orderStatement$split3 === undefined ? 'asc' : _orderStatement$split3;
+    var orderProperty = orderStatement;
+    var direction = 'asc';
+    var isStartWithNegative = orderStatement.startsWith('-');
+    if (isStartWithNegative) {
+      direction = 'desc';
+      orderProperty = orderProperty.substring(1);
+    }
 
     var _sliceRelation2 = sliceRelation(orderProperty),
         propertyName = _sliceRelation2.propertyName,
@@ -324,7 +324,7 @@ var applyOrder = function applyOrder(order, builder) {
 
     if (!relationName) {
       // Root level where should include the root table name
-      var fullyQualifiedColumn = Model.tableName + '.' + propertyName;
+      var fullyQualifiedColumn = '' + propertyName;
       return builder.orderBy(fullyQualifiedColumn, direction);
     }
 

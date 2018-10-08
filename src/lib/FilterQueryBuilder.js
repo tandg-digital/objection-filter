@@ -42,12 +42,12 @@ module.exports = class FilterQueryBuilder {
   }
 
   build(params = {}) {
-    const { fields, limit, offset, order, includes, filter } = params;
+    const { fields, limit, offset, orderBy, includes, filter } = params;
 
     applyFields(fields, this._builder);
     applyWhere(filter || {}, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
-    applyOrder(order, this._builder);
+    applyOrder(orderBy, this._builder);
 
     // Clone the query before adding pagination functions in case of counting
     // this.countQuery = this._builder.clone();
@@ -265,12 +265,18 @@ const applyOrder = function(order, builder) {
   const Model = builder.modelClass();
 
   order.split(',').forEach(orderStatement => {
-    const [orderProperty, direction = 'asc'] = orderStatement.split(' ');
+    let orderProperty = orderStatement;
+    let direction = 'asc';
+    const isStartWithNegative = orderStatement.startsWith('-');
+    if (isStartWithNegative) {
+      direction = 'desc';
+      orderProperty = orderProperty.substring(1);
+    }
     const { propertyName, relationName } = sliceRelation(orderProperty);
 
     if (!relationName) {
       // Root level where should include the root table name
-      const fullyQualifiedColumn = `${Model.tableName}.${propertyName}`;
+      const fullyQualifiedColumn = `${propertyName}`;
       return builder.orderBy(fullyQualifiedColumn, direction);
     }
 
