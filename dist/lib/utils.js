@@ -49,6 +49,9 @@ module.exports.Operations = function (options) {
     $like: function $like(property, operand, builder) {
       return builder.where(property, 'like', operand);
     },
+    $ilike: function $ilike(property, operand, builder) {
+      return builder.where(property, 'ilike', operand);
+    },
     $lt: function $lt(property, operand, builder) {
       return builder.where(property, '<', operand);
     },

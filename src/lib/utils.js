@@ -38,6 +38,8 @@ module.exports.Operations = function(options) {
   const defaultOperators = {
     $like: (property, operand, builder) =>
       builder.where(property, 'like', operand),
+    $ilike: (property, operand, builder) =>
+      builder.where(property, 'ilike', operand),
     $lt: (property, operand, builder) => builder.where(property, '<', operand),
     $gt: (property, operand, builder) => builder.where(property, '>', operand),
     $lte: (property, operand, builder) =>
