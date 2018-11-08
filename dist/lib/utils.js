@@ -35,7 +35,11 @@ var sliceRelation = function sliceRelation(relatedProperty) {
   // https://github.com/Vincit/objection.js/issues/363
   var fullyQualifiedProperty = relationName ? relationName.replace(/\./g, ':') + '.' + propertyName : propertyName;
 
-  return { propertyName: propertyName, relationName: relationName, fullyQualifiedProperty: fullyQualifiedProperty };
+  return {
+    propertyName: propertyName,
+    relationName: relationName,
+    fullyQualifiedProperty: fullyQualifiedProperty
+  };
 };
 module.exports.sliceRelation = sliceRelation;
 
@@ -47,10 +51,10 @@ module.exports.sliceRelation = sliceRelation;
 module.exports.Operations = function (options) {
   var defaultOperators = {
     $like: function $like(property, operand, builder) {
-      return builder.where(property, 'like', operand);
+      return builder.where(property, 'like', '%' + operand + '%');
     },
     $ilike: function $ilike(property, operand, builder) {
-      return builder.where(property, 'ilike', operand);
+      return builder.where(property, 'ilike', '%' + operand + '%');
     },
     $lt: function $lt(property, operand, builder) {
       return builder.where(property, '<', operand);
@@ -94,12 +98,17 @@ module.exports.Operations = function (options) {
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      var iterateLogical = iterateLogicalExpression({ onExit: onExit, onLiteral: onLiteral });
+      var iterateLogical = iterateLogicalExpression({
+        onExit: onExit,
+        onLiteral: onLiteral
+      });
 
       // Wrap within another builder context to prevent end-of-expression errors
       // TODO: Investigate the consequences of not using this wrapper
       return builder.where(function (subQueryBuilder) {
-        iterateLogical({ $or: items }, subQueryBuilder, true);
+        iterateLogical({
+          $or: items
+        }, subQueryBuilder, true);
       });
     },
     $and: function $and(property, items, builder) {
@@ -112,11 +121,16 @@ module.exports.Operations = function (options) {
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      var iterateLogical = iterateLogicalExpression({ onExit: onExit, onLiteral: onLiteral });
+      var iterateLogical = iterateLogicalExpression({
+        onExit: onExit,
+        onLiteral: onLiteral
+      });
 
       // Wrap within another builder context to prevent end-of-expression errors
       return builder.where(function (subQueryBuilder) {
-        iterateLogical({ $and: items }, subQueryBuilder, false);
+        iterateLogical({
+          $and: items
+        }, subQueryBuilder, false);
       });
     }
   };
@@ -151,5 +165,7 @@ module.exports.Operations = function (options) {
     }
   };
 
-  return { applyPropertyExpression: applyPropertyExpression };
+  return {
+    applyPropertyExpression: applyPropertyExpression
+  };
 };

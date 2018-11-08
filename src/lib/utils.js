@@ -5,8 +5,12 @@
  */
 
 const _ = require('lodash');
-const { debug } = require('../config');
-const { iterateLogicalExpression } = require('./LogicalIterator');
+const {
+  debug
+} = require('../config');
+const {
+  iterateLogicalExpression
+} = require('./LogicalIterator');
 
 /**
  * For a property "a.b.c", slice it into relationName: "a.b", "propertyName": "c" and
@@ -21,11 +25,15 @@ const sliceRelation = (relatedProperty, delimiter = '.') => {
 
   // Nested relations need to be in the format a:b:c.name
   // https://github.com/Vincit/objection.js/issues/363
-  const fullyQualifiedProperty = relationName
-    ? `${relationName.replace(/\./g, ':')}.${propertyName}`
-    : propertyName;
+  const fullyQualifiedProperty = relationName ?
+    `${relationName.replace(/\./g, ':')}.${propertyName}` :
+    propertyName;
 
-  return { propertyName, relationName, fullyQualifiedProperty };
+  return {
+    propertyName,
+    relationName,
+    fullyQualifiedProperty
+  };
 };
 module.exports.sliceRelation = sliceRelation;
 
@@ -34,12 +42,12 @@ module.exports.sliceRelation = sliceRelation;
  * If options.operators is specified
  * @param {Object} options.operators
  */
-module.exports.Operations = function(options) {
+module.exports.Operations = function (options) {
   const defaultOperators = {
     $like: (property, operand, builder) =>
-      builder.where(property, 'like', operand),
+      builder.where(property, 'like', `%${operand}%`),
     $ilike: (property, operand, builder) =>
-      builder.where(property, 'ilike', operand),
+      builder.where(property, 'ilike', `%${operand}%`),
     $lt: (property, operand, builder) => builder.where(property, '<', operand),
     $gt: (property, operand, builder) => builder.where(property, '>', operand),
     $lte: (property, operand, builder) =>
@@ -59,42 +67,54 @@ module.exports.Operations = function(options) {
      * @param {QueryBuilder} builder
      */
     $or: (property, items, builder) => {
-      const onExit = function(operator, value, subQueryBuilder) {
+      const onExit = function (operator, value, subQueryBuilder) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral = function(value, subQueryBuilder) {
+      const onLiteral = function (value, subQueryBuilder) {
         onExit('$equals', value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+      const iterateLogical = iterateLogicalExpression({
+        onExit,
+        onLiteral
+      });
 
       // Wrap within another builder context to prevent end-of-expression errors
       // TODO: Investigate the consequences of not using this wrapper
       return builder.where(subQueryBuilder => {
-        iterateLogical({ $or: items }, subQueryBuilder, true);
+        iterateLogical({
+          $or: items
+        }, subQueryBuilder, true);
       });
     },
     $and: (property, items, builder) => {
-      const onExit = function(operator, value, subQueryBuilder) {
+      const onExit = function (operator, value, subQueryBuilder) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral = function(value, subQueryBuilder) {
+      const onLiteral = function (value, subQueryBuilder) {
         onExit('$equals', value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+      const iterateLogical = iterateLogicalExpression({
+        onExit,
+        onLiteral
+      });
 
       // Wrap within another builder context to prevent end-of-expression errors
       return builder.where(subQueryBuilder => {
-        iterateLogical({ $and: items }, subQueryBuilder, false);
+        iterateLogical({
+          $and: items
+        }, subQueryBuilder, false);
       });
     }
   };
-  const { operators } = options;
+  const {
+    operators
+  } = options;
 
   // Custom operators take override default operators
   const allOperators = Object.assign({}, defaultOperators, operators);
@@ -105,7 +125,7 @@ module.exports.Operations = function(options) {
    * @param {Object} expression
    * @param {QueryBuilder} builder
    */
-  const applyPropertyExpression = function(propertyName, expression, builder) {
+  const applyPropertyExpression = function (propertyName, expression, builder) {
     debug(
       `Handling property[${propertyName}] expression[${JSON.stringify(
         expression
@@ -129,5 +149,7 @@ module.exports.Operations = function(options) {
     }
   };
 
-  return { applyPropertyExpression };
+  return {
+    applyPropertyExpression
+  };
 };
