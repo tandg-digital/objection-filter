@@ -300,6 +300,14 @@ describe('aggregation', function () {
               }
             })
             .then(result => {
+              const counts = result.map(({ count1, count2 }) => ({ count1, count2 }));
+              counts.should.deep.equal(
+                fillArray([10, 10, 80], [
+                  { count1: 0, count2: 0 },
+                  { count1: 1, count2: 1 },
+                  { count1: 0, count2: 1 }
+                ])
+              );
               done();
             })
             .catch(done);
@@ -365,6 +373,63 @@ describe('aggregation', function () {
             .then(result => {
               const counts = result.map(item => item.count);
               counts.should.deep.equal([1]);
+              done();
+            })
+            .catch(done);
+        });
+      });
+
+      describe('onAggBuild', function() {
+        it('should return zero owners when filtered', done => {
+          const onAggBuild = function(RelatedModelClass) {
+            return RelatedModelClass.query()
+              .where({ id: 34343 });
+          };
+
+          buildFilter(Animal, null, { onAggBuild })
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    relation: 'owner',
+                    alias: 'count'
+                  }
+                ]
+              }
+            })
+            .then(result => {
+              const counts = result.map(({ count }) => count);
+              _.uniq(counts).should.deep.equal([0]);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should return zero for all owners where firstName !== "F00"', done => {
+          const onAggBuild = function(RelatedModelClass) {
+            if (RelatedModelClass.name === 'Person') {
+              return RelatedModelClass.query()
+                .where({ firstName: 'F00' });
+            }
+          };
+
+          buildFilter(Animal, null, { onAggBuild })
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    distinct: true,
+                    relation: 'owner.movies'
+                  }
+                ]
+              }
+            })
+            .then(result => {
+              const counts = result.map(item => item.count);
+              counts.length.should.equal(100);
+              counts.should.deep.equal(fillArray([10, 90], [10, 0]));
               done();
             })
             .catch(done);

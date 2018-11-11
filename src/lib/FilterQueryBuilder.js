@@ -39,11 +39,10 @@ module.exports = class FilterQueryBuilder {
     this.Model = Model;
     this._builder = Model.query(trx);
 
-    // Initialize custom operators
-    const { operators = {} } = options;
+    const { operators = {}, onAggBuild } = options;
 
     // Initialize instance specific utilities
-    this.utils = Operations({ operators });
+    this.utils = Operations({ operators, onAggBuild });
   }
 
   build(params = {}) {
@@ -116,6 +115,13 @@ const nullToZero = function(knex, tableAlias, columnAlias = 'count') {
 // A list of allowed aggregation functions
 const aggregationFunctions = ['count', 'sum', 'min', 'max', 'avg'];
 
+/**
+ * Build a single aggregation into a target alias on a query builder
+ * Defaults to count, but anything in aggregationFunctions can be used
+ * @param {Object} aggregation
+ * @param {QueryBuilder} builder
+ * @param {Object} utils
+ */
 const buildAggregation = function(aggregation, builder, utils) {
   const Model = builder.modelClass();
   const knex = Model.knex();
@@ -127,6 +133,7 @@ const buildAggregation = function(aggregation, builder, utils) {
     type = 'count',
     field
   } = aggregation;
+  const { onAggBuild } = utils;
 
   // Do some initial validation
   if (!aggregationFunctions.includes(type)) {
@@ -146,7 +153,6 @@ const buildAggregation = function(aggregation, builder, utils) {
   // Filtering starts using the outermost model as a base
   const OuterModel = getOuterModel(builder, relation);
 
-  // TODO: Support outer most models with composite ids
   const idColumns = _.isArray(OuterModel.idColumn)
     ? OuterModel.idColumn
     : [OuterModel.idColumn];
@@ -154,7 +160,7 @@ const buildAggregation = function(aggregation, builder, utils) {
     idColumn => `${fullOuterRelation}.${idColumn}`
   );
 
-  // Create a CTE to do aggregation and filtering
+  // Create the subquery for the aggregation with the base model as a starting point
   const distinctTag = distinct ? 'distinct ' : '';
   const aggregationQuery = Model
     .query()
@@ -165,7 +171,30 @@ const buildAggregation = function(aggregation, builder, utils) {
     ]))
     .leftJoinRelation(relation);
 
-  // Apply the filtering
+  // Apply filters to models on the aggregation path
+  if (onAggBuild) {
+    let currentModel = Model;
+    const relationStack = [];
+    for (const relationName of relation.split('.')) {
+      relationStack.push(relationName);
+      const { relatedModelClass } = currentModel.getRelations()[relationName];
+      const query = onAggBuild(relatedModelClass);
+      const fullyQualifiedRelation = relationStack.join(':');
+      if (query) {
+        const aggModelAlias = `${fullyQualifiedRelation}_agg`;
+        aggregationQuery.innerJoin(query.as(aggModelAlias), function() {
+          this.on(
+            `${aggModelAlias}.${relatedModelClass.idColumn}`,
+            '=',
+            `${fullyQualifiedRelation}.${relatedModelClass.idColumn}`
+          );
+        });
+      }
+      currentModel = relatedModelClass;
+    }
+  }
+
+  // Apply the filtering using the outer model as a starting point
   const filterQuery = OuterModel.query();
   applyRequire($where, filterQuery, utils);
   const filterQueryAlias = 'filter_query';
