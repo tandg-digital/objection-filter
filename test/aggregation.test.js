@@ -278,6 +278,7 @@ describe('aggregation', function () {
         it('should apply multiple counts with filtering', done => {
           buildFilter(Animal)
             .build({
+              order: 'id',
               eager: {
                 $aggregations: [
                   {
