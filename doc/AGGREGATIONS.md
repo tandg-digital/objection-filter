@@ -218,3 +218,38 @@ async function getShopTypes(req) {
 Based on the expressjs route handlers above, a user could call `GET /Shops` to get their list of shops.
 
 They could also call `GET /ShopTypes?filter={"eager": "shops"}` to get all ShopTypes then eagerly load their shops. The `sliceByTenant()` build hook ensures that they only see the shops that they own.
+
+##### Aggregation model hooks
+
+The same thing can be applied for aggregations. We don't want anyone doing `GET /ShopTypes` and getting a count of _all_ shops, but only their own shops. To do this, the `onAggBuild` hook can be used. This hook is called every time a model is _joined through_. For the [onBuild hook](https://vincit.github.io/objection.js/#onbuild), it is called once when a _query is built_.
+
+```js
+const createOnAggBuild = tenantId => Model => {
+  if (Model.name === 'Shop')
+    builder.where({ tenantId });
+};
+
+// Route handler for GET /ShopTypes
+async function getShopTypes(req) {
+  const { tenantId } = req.decoded; // Using some express middleware
+  return await buildFilter(ShopType, null, { onAggBuild: createOnAggBuild(tenantId) })
+    .build(req.query)
+    .onBuild(sliceByTenant(tenantId));
+};
+```
+
+Now a query such as:
+```
+GET /ShopTypes?filter={
+  "eager": {
+    "$aggregations": [
+        {
+          "type": "count",
+          "alias": "shopCount",
+          "relation": "shops"
+        }
+    ]
+  }
+}
+```
+will only show counts for the target `tenantId`.
