@@ -1,5 +1,11 @@
 # Changelog
 
+### 2.0.0
+
+* Add [aggregations](doc/AGGREGATIONS.md) feature
+* Fix bug with [count](https://github.com/tandg-digital/objection-filter/pull/13)
+* Tests now run with sqlite, postgresql and msyql drivers
+
 ### 1.4.0
 
 * Fix bug with [ambiguous column name](https://github.com/tandg-digital/objection-filter/pull/12)
