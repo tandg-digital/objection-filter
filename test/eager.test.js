@@ -3,6 +3,8 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+const { STRING_SORT } = testUtils;
+
 describe('eager object notation', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
@@ -88,7 +90,7 @@ describe('eager object notation', function () {
                 _.flatten(
                   _.map(result, 'movies')
                 ), 'name'
-              ).should.deep.equal(['M98', 'M99']);
+              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
               done();
             })
             .catch(done);
@@ -118,7 +120,7 @@ describe('eager object notation', function () {
                 _.flatten(
                   _.map(result, 'movies')
                 ), 'name'
-              ).should.deep.equal(['M98', 'M99']);
+              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
               done();
             })
             .catch(done);
@@ -337,38 +339,38 @@ describe('eager object notation', function () {
       describe('eager models using related fields', function() {
         // Some convenient constants
         const baseSet = [
-          'M99',
-          'M98',
-          'M97',
-          'M96',
-          'M95',
-          'M94',
-          'M93',
-          'M92',
+          'M90',
           'M91',
-          'M90'
+          'M92',
+          'M93',
+          'M94',
+          'M95',
+          'M96',
+          'M97',
+          'M98',
+          'M99'
         ];
         const extendedSet = [
-          'M99',
-          'M98',
-          'M97',
-          'M96',
-          'M95',
-          'M94',
-          'M93',
-          'M92',
-          'M91',
-          'M90',
-          'M89',
-          'M88',
-          'M87',
-          'M86',
-          'M85',
-          'M84',
-          'M83',
-          'M82',
+          'M80',
           'M81',
-          'M80'
+          'M82',
+          'M83',
+          'M84',
+          'M85',
+          'M86',
+          'M87',
+          'M88',
+          'M89',
+          'M90',
+          'M91',
+          'M92',
+          'M93',
+          'M94',
+          'M95',
+          'M96',
+          'M97',
+          'M98',
+          'M99'
         ];
 
         it('should filter by a single field', async function() {
@@ -387,7 +389,7 @@ describe('eager object notation', function () {
             _.flatten(
               _.map(result, 'movies')
             ), 'name'
-          ).should.deep.equal(baseSet);
+          ).sort(STRING_SORT).should.deep.equal(baseSet);
         });
 
         it('should filter by using a logical condition', async function() {
@@ -409,7 +411,7 @@ describe('eager object notation', function () {
             _.flatten(
               _.map(result, 'movies')
             ), 'name'
-          ).should.deep.equal(extendedSet);
+          ).sort(STRING_SORT).should.deep.equal(extendedSet);
         });
 
         it('should filter by using a logical condition after property name', async function() {
@@ -433,7 +435,7 @@ describe('eager object notation', function () {
             _.flatten(
               _.map(result, 'movies')
             ), 'name'
-          ).should.deep.equal(extendedSet);
+          ).sort(STRING_SORT).should.deep.equal(extendedSet);
         });
       });
     });

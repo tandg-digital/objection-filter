@@ -1,6 +1,6 @@
 {
   "name": "objection-filter",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "engines": {
@@ -45,8 +45,10 @@
     "eslint-plugin-import": "^2.13.0",
     "knex": "^0.14.4",
     "mocha": "^3.5.0",
+    "mysql": "^2.16.0",
     "nyc": "^11.1.0",
     "objection": "^1.0.0",
+    "pg": "^7.4.3",
     "sqlite3": "^3.1.13"
   },
   "dependencies": {

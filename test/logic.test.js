@@ -3,6 +3,8 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+const { STRING_SORT } = testUtils;
+
 describe('logical expression filters', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
@@ -39,7 +41,7 @@ describe('logical expression filters', function () {
             .then(result => {
               result.length.should.equal(2);
               const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09', 'F08']);
+              names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
               done();
             })
             .catch(done);
@@ -63,7 +65,7 @@ describe('logical expression filters', function () {
             .then(result => {
               result.length.should.equal(3);
               const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09', 'F08', 'F07']);
+              names.sort(STRING_SORT).should.deep.equal(['F07', 'F08', 'F09']);
               done();
             })
             .catch(done);
@@ -82,7 +84,7 @@ describe('logical expression filters', function () {
             .then(result => {
               result.length.should.equal(2);
               const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F08', 'F09']);
+              names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
               done();
             })
             .catch(done);
@@ -115,7 +117,7 @@ describe('logical expression filters', function () {
             .then(result => {
               result.length.should.equal(4);
               const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09', 'F08', 'F07', 'F06']);
+              names.sort(STRING_SORT).should.deep.equal(['F06', 'F07', 'F08', 'F09']);
               done();
             })
             .catch(done);

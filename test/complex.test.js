@@ -3,6 +3,8 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../src');
 
+const { STRING_SORT } = testUtils;
+
 describe('complex filters', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
@@ -310,7 +312,7 @@ describe('complex filters', function () {
               }
             })
             .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
+              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
                 'F00', 'F01'
               ]);
               done();
@@ -332,7 +334,7 @@ describe('complex filters', function () {
               }
             })
             .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
+              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
                 'F00', 'F01'
               ]);
               done();
@@ -354,8 +356,8 @@ describe('complex filters', function () {
               }
             })
             .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
-                'F01', 'F00'
+              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
+                'F00', 'F01'
               ]);
               done();
             })

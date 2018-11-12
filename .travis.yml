@@ -3,6 +3,9 @@ language: node_js
 node_js:
 - '8'
 - '7'
+before_script:
+  - psql -c "create database objection_filter_test;" -U postgres
+  - mysql -e "create database objection_filter_test;"
 install:
   - yarn global add babel-cli
   - yarn global add coveralls

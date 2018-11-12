@@ -4,6 +4,11 @@ const path = require('path');
 const Knex = require('knex');
 const Promise = require('bluebird');
 const objection = require('objection');
+const pg = require('pg');
+
+pg.types.setTypeParser(1700, 'text', parseFloat); // DECIMAL
+pg.types.setTypeParser(20, 'text', parseInt); // BIGINT
+const getNumber = s => parseInt(s.replace(/^\D*/, ''), 10);
 
 module.exports = {
   testDatabaseConfigs: [{
@@ -12,7 +17,31 @@ module.exports = {
       filename: path.join(os.tmpdir(), 'objection_find_test.db')
     },
     useNullAsDefault: true
+  }, {
+    client: 'postgres',
+    connection: {
+      host: '127.0.0.1',
+      database: 'objection_filter_test'
+    },
+    pool: {
+      min: 0,
+      max: 10
+    }
+  }, {
+    client: 'mysql',
+    connection: {
+      host: '127.0.0.1',
+      user: 'travis',
+      database: 'objection_filter_test'
+    },
+    pool: {
+      min: 0,
+      max: 10
+    }
   }],
+
+  NUMERIC_SORT: (a, b) => a - b,
+  STRING_SORT: (a, b) => getNumber(a) - getNumber(b),
 
   initialize: function (knexConfig) {
     const knex = Knex(knexConfig);
@@ -67,7 +96,7 @@ module.exports = {
       .createTable('Movie_Version', function (table) {
         table.biginteger('movieId').unsigned().references('Movie.id').index();
         table.integer('version').index();
-        table.primary(['movieId', 'version']);
+        table.unique(['movieId', 'version']);
       })
       .then(function () {
         if (session.config.client === 'postgres') {
@@ -245,6 +274,19 @@ function createModels(knex) {
   class Animal extends objection.Model {
     static get tableName() {
       return 'Animal';
+    }
+
+    static get relationMappings() {
+      return {
+        owner: {
+          relation: objection.BelongsToOneRelation,
+          modelClass: Person,
+          join: {
+            from: 'Animal.ownerId',
+            to: 'Person.id'
+          }
+        }
+      };
     }
   }
 
