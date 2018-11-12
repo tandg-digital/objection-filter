@@ -25,6 +25,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * However, for 'require' conditions, this might be possible since ALL variables exist
  * in the same scope, since there's a join
  */
+
 var _ = require('lodash');
 
 var _require = require('../config'),
@@ -40,6 +41,8 @@ var _require3 = require('./ExpressionBuilder'),
 var _require4 = require('./LogicalIterator'),
     iterateLogicalExpression = _require4.iterateLogicalExpression,
     getPropertiesFromExpression = _require4.getPropertiesFromExpression;
+
+var baseFields = ['id', 'createdAt', 'updatedAt'];
 
 module.exports = function () {
   /**
@@ -61,13 +64,16 @@ module.exports = function () {
 
     // Initialize instance specific utilities
 
-    this.utils = Operations({ operators: operators });
+    this.utils = Operations({
+      operators: operators
+    });
   }
 
   _createClass(FilterQueryBuilder, [{
     key: 'build',
     value: function build() {
       var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var baseModel = arguments[1];
       var fields = params.fields,
           limit = params.limit,
           offset = params.offset,
@@ -84,7 +90,7 @@ module.exports = function () {
       // Clone the query before adding pagination functions in case of counting
       // this.countQuery = this._builder.clone();
       if (includes) {
-        applyEager(includes, this._builder, this.utils);
+        applyEager(includes, this._builder, this.utils, baseModel);
       }
       applyLimit(limit, offset, this._builder);
 
@@ -129,7 +135,10 @@ var applyEagerFilter = function applyEagerFilter() {
   var path = arguments[2];
   var utils = arguments[3];
 
-  debug('applyEagerFilter(', { expression: expression, path: path }, ')');
+  debug('applyEagerFilter(', {
+    expression: expression,
+    path: path
+  }, ')');
 
   // Apply a where on the root model
   if (expression.$where) {
@@ -154,7 +163,10 @@ var applyEagerFilter = function applyEagerFilter() {
 
     if (rhs.$where) {
       (function () {
-        debug('modifyEager(', { relationExpression: relationExpression, filter: rhs.$where }, ')');
+        debug('modifyEager(', {
+          relationExpression: relationExpression,
+          filter: rhs.$where
+        }, ')');
         var filterCopy = Object.assign({}, rhs.$where);
 
         // TODO: Could potentially apply all 'modifyEagers' at the end
@@ -272,6 +284,7 @@ var applyWhere = function applyWhere() {
   var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var builder = arguments[1];
   var utils = arguments[2];
+  var baseModel = arguments[3];
   var applyPropertyExpression = utils.applyPropertyExpression;
 
   var Model = builder.modelClass();
@@ -283,7 +296,7 @@ var applyWhere = function applyWhere() {
 
     if (!relationName) {
       // Root level where should include the root table name
-      var fullyQualifiedProperty = '' + propertyName;
+      var fullyQualifiedProperty = _.includes(baseFields, propertyName) ? (baseModel || Model.tableName) + '.' + propertyName : propertyName;
       return applyPropertyExpression(fullyQualifiedProperty, andExpression, builder);
     }
 
