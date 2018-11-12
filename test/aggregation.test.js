@@ -349,9 +349,65 @@ describe('aggregation', function () {
             .catch(done);
         });
 
-        it('should throw an error with unspecified field');
+        it('should throw an asynchronous error with unspecified field', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'sum',
+                    field: 'asdfsdfasdf',
+                    relation: 'movies'
+                  }
+                ]
+              }
+            })
+            .then(() => {
+              done(new Error('should have failed validation'));
+            })
+            .catch(() => done());
+        });
 
-        it('should throw an error with an invalid type');
+        it('should throw a synchronous error with an invalid type', done => {
+          try {
+            buildFilter(Person)
+              .build({
+                eager: {
+                  $aggregations: [
+                    {
+                      type: 'fasdfasd',
+                      field: 'id',
+                      relation: 'movies'
+                    }
+                  ]
+                }
+              });
+          } catch (err) {
+            done();
+            return;
+          }
+          throw new Error('should have failed validation');
+        });
+
+        it('should throw a synchronous error with type != "count" and "field" = undefined', done => {
+          try {
+            buildFilter(Person)
+              .build({
+                eager: {
+                  $aggregations: [
+                    {
+                      type: 'sum',
+                      relation: 'movies'
+                    }
+                  ]
+                }
+              });
+          } catch (err) {
+            done();
+            return;
+          }
+          throw new Error('should have failed validation');
+        });
       });
 
       describe('integration', function() {
@@ -374,6 +430,60 @@ describe('aggregation', function () {
             .then(result => {
               const counts = result.map(item => item.count);
               counts.should.deep.equal([1]);
+              done();
+            })
+            .catch(done);
+        });
+
+        it('should allow ordering based on the aggregated field', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'sum',
+                    alias: 'movieIdSum',
+                    relation: 'movies',
+                    field: 'id'
+                  }
+                ]
+              },
+              order: 'movieIdSum desc',
+              limit: 5
+            })
+            .then(result => {
+              result.map(item => item.firstName).should.deep.equal([
+                'F09', 'F08', 'F07', 'F06', 'F05'
+              ]);
+              done();
+            })
+            .catch(done);
+        });
+      });
+
+      describe('filtering on aggregated fields', function() {
+        it('should allow applying top level $where to an aggregation', done => {
+          buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'sum',
+                    alias: 'movieIdSum',
+                    distinct: true,
+                    relation: 'movies',
+                    field: 'id'
+                  }
+                ],
+                $where: {
+                  movieIdSum: { $gt: 500 }
+                }
+              }
+            })
+            .then(result => {
+              result.map(item => item.firstName).should.deep.equal([
+                'F05', 'F06', 'F07', 'F08', 'F09'
+              ]);
               done();
             })
             .catch(done);

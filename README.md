@@ -13,6 +13,7 @@ Eagerly load a bunch of related data in a single query. This is useful for getti
 
 * [Changelog](doc/CHANGELOG.md)
 * [Recipes](doc/RECIPES.md)
+* [Aggregation](doc/AGGREGATIONS.md)
 
 # Installation
 
@@ -83,6 +84,8 @@ There are a number of built-in operations that can be applied to columns (custom
 5. **$exists** - Whether a property is not null
 6. **$or** - A top level _OR_ conditional operator
 
+For any operators not available (eg _ILIKE_, refer to the custom operators section below).
+
 ##### Example
 
 An example of operator usage
@@ -117,6 +120,32 @@ An example of operator usage
   }
 }
 ```
+
+##### Custom Operators
+
+If the built in filter operators aren't quite enough, custom operators can be added. A common use case for this may be to add a `lower case string comparison` operator, which may vary in implementation depending on the SQL dialect.
+
+Example:
+
+```js
+const options = {
+  operators: {
+    $equalsLower: (property, operand, builder) =>
+      builder.whereRaw('LOWER(??) = LOWER(?)', [property, operand])
+  }
+};
+
+buildFilter(Person, null, options)
+  .build({
+    eager: {
+      $where: {
+        firstName: { $equalsLower: 'John' }
+      }
+    }
+  })
+```
+
+The `$equalsLower` operator can now be used as a new operator and will use the custom operator callback specified.
 
 # Logical Expressions
 Logical expressions can be applied to both the `eager` and `require` helpers. The `where` top level operator will eventually be deprecated and replaced by the new `eager` [object notation](https://vincit.github.io/objection.js/#relationexpression-object-notation) in objection.js.
@@ -177,29 +206,3 @@ Note that in these examples, all logical expressions come _before_ the property 
 ```
 
 The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". The `$where` will apply to relations of the eager model using dot notation. For example, you can query `Customers`, eager load their `orders` and filter those orders by the `product.name`. Note that `product.name` is a related field of the order model, not the customers model.
-
-# Custom Operators
-
-If the built in filter operators aren't quite enough, custom operators can be added. A common use case for this may be to add a `lower case string comparison` operator, which may vary in implementation depending on the SQL dialect.
-
-Example:
-
-```js
-const options = {
-  operators: {
-    $equalsLower: (property, operand, builder) =>
-      builder.whereRaw('LOWER(??) = LOWER(?)', [property, operand])
-  }
-};
-
-buildFilter(Person, null, options)
-  .build({
-    eager: {
-      $where: {
-        firstName: { $equalsLower: 'John' }
-      }
-    }
-  })
-```
-
-The `$equalsLower` operator can now be used as a new operator and will use the custom operator callback specified.
