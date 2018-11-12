@@ -83,14 +83,14 @@ module.exports = function () {
 
 
       applyFields(fields, this._builder);
-      applyWhere(filter || {}, this._builder, this.utils);
+      applyWhere(filter || {}, this._builder, this.utils, baseModel);
       applyRequire(params.require, this._builder, this.utils);
-      applyOrder(orderBy, this._builder);
+      applyOrder(orderBy, this._builder, baseModel);
 
       // Clone the query before adding pagination functions in case of counting
       // this.countQuery = this._builder.clone();
       if (includes) {
-        applyEager(includes, this._builder, this.utils, baseModel);
+        applyEager(includes, this._builder, this.utils);
       }
       applyLimit(limit, offset, this._builder);
 
@@ -318,7 +318,7 @@ module.exports.applyWhere = applyWhere;
  * @param {String} order An comma delimited order expression
  * @param {QueryBuilder} builder The root query builder
  */
-var applyOrder = function applyOrder(order, builder) {
+var applyOrder = function applyOrder(order, builder, baseModel) {
   if (!order) return;
   var Model = builder.modelClass();
 
@@ -337,7 +337,7 @@ var applyOrder = function applyOrder(order, builder) {
 
     if (!relationName) {
       // Root level where should include the root table name
-      var fullyQualifiedColumn = '' + propertyName;
+      var fullyQualifiedColumn = _.includes(baseFields, propertyName) ? (baseModel || Model.tableName) + '.' + propertyName : propertyName;
       return builder.orderBy(fullyQualifiedColumn, direction);
     }
 
