@@ -206,3 +206,30 @@ Note that in these examples, all logical expressions come _before_ the property 
 ```
 
 The `$where` will apply to the relation that immediately precedes it in the tree, in the above case "city". The `$where` will apply to relations of the eager model using dot notation. For example, you can query `Customers`, eager load their `orders` and filter those orders by the `product.name`. Note that `product.name` is a related field of the order model, not the customers model.
+
+# Aggregations
+
+[Aggregations](doc/AGGREGATIONS.md) such as _count, sum, min, max, avg_ can be applied to the queried model.
+
+Additionally for any aggregations, you can use them in other expressions above including:
+
+* Filtering using `$where`
+* Ordering using `order`
+
+For more detailed descriptions of each feature, refer to the [aggregations section](doc/AGGREGATIONS.md).
+
+A basic example of an aggregation is:
+
+```js
+{
+  "eager": {
+    "$aggregations": [
+        {
+          "type": "count",
+          "alias": "numberOfOrders",
+          "relation": "orders"
+        }
+    ]
+  }
+}
+```

@@ -176,7 +176,7 @@ An example is you have a _Customer_ model, with an aggregation on each customer 
         }
     ]
   },
-  "order": "count desc",
+  "order": "numberOfOrders desc",
   "limit": 10
 }
 ```
