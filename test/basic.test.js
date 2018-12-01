@@ -28,294 +28,224 @@ describe('basic filters', function () {
       });
 
       describe('filter attributes', function() {
-        it('should limit', done => {
-          buildFilter(Person)
+        it('should limit', async () => {
+          const result = await buildFilter(Person)
             .build({
               limit: 1
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.should.have.length(1);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(1);
         });
 
-        it('should offset', done => {
-          buildFilter(Person)
+        it('should offset', async () => {
+          const result = await buildFilter(Person)
             .build({
               limit: 1,
               offset: 1
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.should.have.length(1);
-              result[0].firstName.should.equal('F01');
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(1);
+          result[0].firstName.should.equal('F01');
         });
 
-        it('should select limited fields', done => {
-          buildFilter(Person)
+        it('should select limited fields', async () => {
+          const result = await buildFilter(Person)
             .build({
               limit: 1,
               fields: ['id']
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.should.have.length(1);
-              _.keys(result[0]).should.deep.equal(['id']);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(1);
+          _.keys(result[0]).should.deep.equal(['id']);
         });
 
-        it('should order by descending', done => {
-          buildFilter(Person)
+        it('should order by descending', async () => {
+          const result = await buildFilter(Person)
             .build({
               order: 'id desc'
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.map(item => item.id).should.deep.equal([
-                10, 9, 8, 7, 6, 5, 4, 3, 2, 1
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.map(item => item.id).should.deep.equal([
+            10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+          ]);
         });
 
-        it('should order by ascending', done => {
-          buildFilter(Person)
+        it('should order by ascending', async () => {
+          const result = await buildFilter(Person)
             .build({
               order: 'id asc'
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.map(item => item.id).should.deep.equal([
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.map(item => item.id).should.deep.equal([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+          ]);
         });
 
-        it('should order by implicit ascending', done => {
-          buildFilter(Person)
+        it('should order by implicit ascending', async () => {
+          const result = await buildFilter(Person)
             .build({
               order: 'id'
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.map(item => item.id).should.deep.equal([
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.map(item => item.id).should.deep.equal([
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+          ]);
         });
 
-        it('should order by multiple columns', done => {
-          buildFilter(Movie)
+        it('should order by multiple columns', async () => {
+          const result = await buildFilter(Movie)
             .build({
               order: 'seq,id'
-            })
-            .then(result => {
-              result.map(item => item.id).should.deep.equal(
-                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
-              );
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.id).should.deep.equal(
+            _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+          );
         });
 
-        it('should order by multiple columns with space', done => {
-          buildFilter(Movie)
+        it('should order by multiple columns with space', async () => {
+          const result = await buildFilter(Movie)
             .build({
               order: 'seq, id'
-            })
-            .then(result => {
-              result.map(item => item.id).should.deep.equal(
-                _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
-              );
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.id).should.deep.equal(
+            _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+          );
         });
       });
 
       describe('eager loaded data', function() {
-        it('should include eagerly loaded data', done => {
-          buildFilter(Person)
+        it('should include eagerly loaded data', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies'
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              _.forEach(person => person.movies.should.be.an.array);
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          _.forEach(person => person.movies.should.be.an.array);
         });
 
-        it('should only select some fields on eagerly loaded models', done => {
-          buildFilter(Person)
+        it('should only select some fields on eagerly loaded models', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               fields: ['movies.id']
-            })
-            .then(result => {
-              _.forEach(result, person => {
-                _.forEach(person.movies, movie => {
-                  _.keys(movie).should.deep.equal(['id']);
-                });
-              });
-              done();
-            })
-            .catch(done);
+            });
+          _.forEach(result, person => {
+            _.forEach(person.movies, movie => {
+              _.keys(movie).should.deep.equal(['id']);
+            });
+          });
         });
 
-        it('should filter the root model', done => {
-          buildFilter(Person)
+        it('should filter the root model', async () => {
+          const result = await buildFilter(Person)
             .build({
               where: {
                 firstName: 'F00'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              result[0].firstName.should.equal('F00');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          result[0].firstName.should.equal('F00');
         });
 
-        it('should filter eagerly loaded data using `where in`', done => {
-          buildFilter(Person)
+        it('should filter eagerly loaded data using `where in`', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               where: {
                 'movies.name': 'M99'
               }
-            })
-            .then(result => {
-              // Should inclue all root models regardless of condition
-              result.length.should.equal(10);
-              _.forEach(result, person => {
-                person.movies.forEach(movie => {
-                  movie.name.should.equal('M99');
-                });
-              });
-              done();
-            })
-            .catch(done);
+            });
+          // Should inclue all root models regardless of condition
+          result.length.should.equal(10);
+          _.forEach(result, person => {
+            person.movies.forEach(movie => {
+              movie.name.should.equal('M99');
+            });
+          });
         });
 
-        it('should filter eagerly loaded 1-deep data using `join`', done => {
-          buildFilter(Person)
+        it('should filter eagerly loaded 1-deep data using `join`', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
                 'movies.name': 'M99'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              result[0].firstName.should.equal('F00');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          result[0].firstName.should.equal('F00');
         });
 
-        it('should filter eagerly loaded 2-deep data using `join`', done => {
-          buildFilter(Person)
+        it('should filter eagerly loaded 2-deep data using `join`', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
                 'parent.movies.name': 'M99'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              result[0].firstName.should.equal('F01');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          result[0].firstName.should.equal('F01');
         });
 
-        it('should require with composite keys', done => {
-          buildFilter(MovieVersion)
+        it('should require with composite keys', async () => {
+          const result = await buildFilter(MovieVersion)
             .build({
               eager: 'movie',
               require: {
                 'movie.name': 'M00'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              result[0].movieId.should.equal(100);
-              result[0].movie.name.should.equal('M00');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          result[0].movieId.should.equal(100);
+          result[0].movie.name.should.equal('M00');
         });
 
-        it('should order eagerly loaded model', done => {
-          buildFilter(Person)
+        it('should order eagerly loaded model', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               order: 'movies.id asc',
               limit: 1
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.forEach(person => {
-                [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a > b)
-                  .should.deep.equal(
-                    person.movies.map(movie => movie.id)
-                  );
-              });
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.forEach(person => {
+            [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a > b)
+              .should.deep.equal(
+                person.movies.map(movie => movie.id)
+              );
+          });
         });
 
-        it('should order eagerly loaded model descending', done => {
-          buildFilter(Person)
+        it('should order eagerly loaded model descending', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               order: 'movies.id desc',
               limit: 1
-            })
-            .then(result => {
-              result.should.be.an.an('array');
-              result.forEach(person => {
-                [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a < b)
-                  .should.deep.equal(
-                    person.movies.map(movie => movie.id)
-                  );
-              });
-              done();
-            })
-            .catch(done);
+            });
+          result.should.be.an.an('array');
+          result.forEach(person => {
+            [].concat(person.movies.map(movie => movie.id)).sort((a, b) => a < b)
+              .should.deep.equal(
+                person.movies.map(movie => movie.id)
+              );
+          });
         });
       });
 
       describe('controls and errors', function() {
-        it('should limit eager expressions', done => {
-          buildFilter(Person)
-            .allowEager('pets')
-            .build({
-              eager: 'movies'
-            })
-            .then(() => {
-              done(new Error('Eager expression should not be allowed'));
-            })
-            .catch(err => {
-              err.statusCode.should.equal(400);
-              done();
-            });
+        it('should limit eager expressions', async () => {
+          try {
+            await buildFilter(Person)
+              .allowEager('pets')
+              .build({
+                eager: 'movies'
+              });
+          } catch (err) {
+            return;
+          }
+          throw new Error('Eager expression should not be allowed');
         });
       });
     });

@@ -51,7 +51,7 @@ describe('Custom Operators', function () {
         return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
-      it('should create a custom operator', done => {
+      it('should create a custom operator', async () => {
         const options = {
           operators: {
             $inCustom: (property, operand, builder) => {
@@ -59,22 +59,18 @@ describe('Custom Operators', function () {
             }
           }
         };
-        buildFilter(Person, null, options)
+        const result = await buildFilter(Person, null, options)
           .build({
             where: {
               firstName: { $inCustom: null }
             }
-          })
-          .then(result => {
-            result.should.be.an.an('array');
-            result.should.have.length(1);
-            result[0].firstName.should.equal('F00');
-            done();
-          })
-          .catch(done);
+          });
+        result.should.be.an.an('array');
+        result.should.have.length(1);
+        result[0].firstName.should.equal('F00');
       });
 
-      it('should work with lower() function', done => {
+      it('should work with lower() function', async () => {
         const options = {
           operators: {
             $equalsLower: (property, operand, builder) => {
@@ -85,22 +81,18 @@ describe('Custom Operators', function () {
             }
           }
         };
-        buildFilter(Person, null, options)
+        const result = await buildFilter(Person, null, options)
           .build({
             where: {
               firstName: { $equalsLower: 'f00' }
             }
-          })
-          .then(result => {
-            result.should.be.an.an('array');
-            result.should.have.length(1);
-            result[0].firstName.should.equal('F00');
-            done();
-          })
-          .catch(done);
+          });
+        result.should.be.an.an('array');
+        result.should.have.length(1);
+        result[0].firstName.should.equal('F00');
       });
 
-      it('should override existing operator', done => {
+      it('should override existing operator', async () => {
         const options = {
           operators: {
             $in: (property, operand, builder) => {
@@ -108,22 +100,18 @@ describe('Custom Operators', function () {
             }
           }
         };
-        buildFilter(Person, null, options)
+        const result = await buildFilter(Person, null, options)
           .build({
             where: {
               firstName: { $in: 'F00' }
             }
-          })
-          .then(result => {
-            result.should.be.an.an('array');
-            result.should.have.length(1);
-            result[0].firstName.should.equal('F00');
-            done();
-          })
-          .catch(done);
+          });
+        result.should.be.an.an('array');
+        result.should.have.length(1);
+        result[0].firstName.should.equal('F00');
       });
 
-      it('should work alongside default operators', done => {
+      it('should work alongside default operators', async () => {
         const options = {
           operators: {
             $inCustom: (property, operand, builder) => {
@@ -131,20 +119,16 @@ describe('Custom Operators', function () {
             }
           }
         };
-        buildFilter(Person, null, options)
+        const result = await buildFilter(Person, null, options)
           .build({
             where: {
               firstName: { $inCustom: 'F00' },
               lastName: { $equals: 'L09' }
             }
-          })
-          .then(result => {
-            result.should.be.an.an('array');
-            result.should.have.length(1);
-            result[0].firstName.should.equal('F00');
-            done();
-          })
-          .catch(done);
+          });
+        result.should.be.an.an('array');
+        result.should.have.length(1);
+        result[0].firstName.should.equal('F00');
       });
     });
   });

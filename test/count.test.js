@@ -25,139 +25,77 @@ describe('count queries', function () {
         return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
       });
 
-      it('should count with a limit', done => {
+      it('should count with a limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({ limit: 1 });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(10);
-            done();
-          })
-          .catch(done);
+        const result = await builder.build({ limit: 1 });
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(10);
       });
 
-      it('should count with an offset and limit', done => {
+      it('should count with an offset and limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({ limit: 1, offset: 1 });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(10);
-            done();
-          })
-          .catch(done);
+        const result = await builder.build({ limit: 1, offset: 1 });
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(10);
       });
 
-      it('should count with a where clause', done => {
+      it('should count with a where clause', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({ where: { firstName: { $in: ['F00', 'F01'] } } });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(2);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(2);
-            done();
-          })
-          .catch(done);
+        const result = await builder.build({ where: { firstName: { $in: ['F00', 'F01'] } } });
+        const count = await builder.count();
+        result.length.should.equal(2);
+        count.should.equal(2);
       });
 
-      it('should count with a require clause', done => {
+      it('should count with a require clause', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({
+        const result = await builder.build({
           require: {
             'movies.name': { $in: ['M09'] }
           }
         });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(1);
-            done();
-          })
-          .catch(done);
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(1);
       });
 
-      it('should count with a where clause and limit', done => {
+      it('should count with a where clause and limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({
+        const result = await builder.build({
           where: { firstName: { $in: ['F00', 'F01', 'F02'] } },
           limit: 1
         });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(3);
-            done();
-          })
-          .catch(done);
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(3);
       });
 
-      it('should count with a require clause and limit', done => {
+      it('should count with a require clause and limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({
+        const result = await builder.build({
           require: {
             'movies.name': { $in: ['M00', 'M10'] }
           },
           limit: 1
         });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(2);
-            done();
-          })
-          .catch(done);
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(2);
       });
 
-      it('should count with an eager expression and limit', done => {
+      it('should count with an eager expression and limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({ limit: 2, eager: 'movies' });
-        const countQuery = builder.count();
-
-        query
-          .then(result => {
-            result.length.should.equal(2);
-            return countQuery;
-          })
-          .then(count => {
-            count.should.equal(10);
-            done();
-          })
-          .catch(done);
+        const result = await builder.build({ limit: 2, eager: 'movies' });
+        const count = await builder.count();
+        result.length.should.equal(2);
+        count.should.equal(10);
       });
-      it('should count with an eager.$where and limit', done => {
+
+      it('should count with an eager.$where and limit', async () => {
         const builder = buildFilter(Person);
-        const query = builder.build({
+        const result = await builder.build({
           limit: 1,
           eager: {
             $where: {
@@ -166,16 +104,9 @@ describe('count queries', function () {
             movies: true
           }
         });
-        query
-          .then(result => {
-            result.length.should.equal(1);
-            return builder.count();
-          })
-          .then(count => {
-            count.should.equal(2);
-            done();
-          })
-          .catch(done);
+        const count = await builder.count();
+        result.length.should.equal(1);
+        count.should.equal(2);
       });
     });
   });

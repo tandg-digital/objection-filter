@@ -28,21 +28,17 @@ describe('complex filters', function () {
       });
 
       describe('edge cases', function() {
-        it('should do nothing with no expression', done => {
-          buildFilter(Person)
-            .build()
-            .then(result => {
-              result.length.should.equal(10);
-              result.map(item => item.firstName).should.deep.equal([
-                'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
-              ]);
-              done();
-            })
-            .catch(done);
+        it('should do nothing with no expression', async () => {
+          const result = await buildFilter(Person)
+            .build();
+          result.length.should.equal(10);
+          result.map(item => item.firstName).should.deep.equal([
+            'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
+          ]);
         });
 
-        it('should do nothing with no operator', done => {
-          buildFilter(Person)
+        it('should do nothing with no operator', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -50,44 +46,34 @@ describe('complex filters', function () {
                   $invalid: 'M09'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              result.map(item => item.firstName).should.deep.equal([
-                'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          result.map(item => item.firstName).should.deep.equal([
+            'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
+          ]);
         });
 
-        it('should be equivalent if require/where on a root model column', done => {
-          const requireQuery = buildFilter(Person)
+        it('should be equivalent if require/where on a root model column', async () => {
+          const results1 = await buildFilter(Person)
             .build({
               require: {
                 firstName: 'F01'
               }
             });
 
-          const whereQuery = buildFilter(Person)
+          const results2 = await buildFilter(Person)
             .build({
               where: {
                 firstName: 'F01'
               }
             });
-
-          Promise.all([requireQuery, whereQuery])
-            .then(([results1, results2]) => {
-              results1.should.deep.equal(results2);
-              done();
-            })
-            .catch(done);
+          results1.should.deep.equal(results2);
         });
       });
 
       describe('comparative operators', function() {
-        it('should search related model using full-string $like', done => {
-          buildFilter(Person)
+        it('should search related model using full-string $like', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -95,18 +81,14 @@ describe('complex filters', function () {
                   $like: 'M09'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using sub-string $like', done => {
-          buildFilter(Person)
+        it('should search related model using sub-string $like', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -114,18 +96,14 @@ describe('complex filters', function () {
                   $like: 'M0%'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using $gt', done => {
-          buildFilter(Person)
+        it('should search related model using $gt', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -133,18 +111,14 @@ describe('complex filters', function () {
                   $gt: 98
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using $lt', done => {
-          buildFilter(Person)
+        it('should search related model using $lt', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -152,18 +126,14 @@ describe('complex filters', function () {
                   $lt: 2
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F00');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F00');
         });
 
-        it('should search related model using $gte', done => {
-          buildFilter(Person)
+        it('should search related model using $gte', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -171,75 +141,59 @@ describe('complex filters', function () {
                   $gte: 99
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using $lte', done => {
-          buildFilter(Person)
+        it('should search related model using $lte', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 'movies.id': {
                   $lte: 3
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F00');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F00');
         });
 
 
-        it('should search related model using $exists', done => {
-          buildFilter(Person)
+        it('should search related model using $exists', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 'movies.code': {
                   $exists: true
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(5);
-              result.map(item => item.firstName).should.deep.equal([
-                'F05', 'F06', 'F07', 'F08', 'F09'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(5);
+          result.map(item => item.firstName).should.deep.equal([
+            'F05', 'F06', 'F07', 'F08', 'F09'
+          ]);
         });
 
-        it('should search related model using !$exists', done => {
-          buildFilter(Person)
+        it('should search related model using !$exists', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 'movies.code': {
                   $exists: false
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(5);
-              result.map(item => item.firstName).should.deep.equal([
-                'F00', 'F01', 'F02', 'F03', 'F04'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(5);
+          result.map(item => item.firstName).should.deep.equal([
+            'F00', 'F01', 'F02', 'F03', 'F04'
+          ]);
         });
 
-        it('should search related model using explicit $equals', done => {
-          buildFilter(Person)
+        it('should search related model using explicit $equals', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -247,18 +201,14 @@ describe('complex filters', function () {
                   $equals: 98
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using explicit `=`', done => {
-          buildFilter(Person)
+        it('should search related model using explicit `=`', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -266,18 +216,14 @@ describe('complex filters', function () {
                   '=': 98
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
         });
 
-        it('should search related model using $in', done => {
-          buildFilter(Person)
+        it('should search related model using $in', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -285,21 +231,17 @@ describe('complex filters', function () {
                   $in: [88, 98]
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              result.map(item => item.firstName).should.deep.equal([
-                'F08', 'F09'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          result.map(item => item.firstName).should.deep.equal([
+            'F08', 'F09'
+          ]);
         });
       });
 
       describe('logical operators', function() {
-        it('should search root model using `require $or $like`', done => {
-          buildFilter(Person)
+        it('should search root model using `require $or $like`', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -310,18 +252,14 @@ describe('complex filters', function () {
                   ]
                 }
               }
-            })
-            .then(result => {
-              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
-                'F00', 'F01'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
+            'F00', 'F01'
+          ]);
         });
 
-        it('should search root model using `require $or` and different comparators', done => {
-          buildFilter(Person)
+        it('should search root model using `require $or` and different comparators', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -332,18 +270,14 @@ describe('complex filters', function () {
                   ]
                 }
               }
-            })
-            .then(result => {
-              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
-                'F00', 'F01'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
+            'F00', 'F01'
+          ]);
         });
 
-        it('should search root model using `require $or` and operand values', done => {
-          buildFilter(Person)
+        it('should search root model using `require $or` and operand values', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -354,18 +288,14 @@ describe('complex filters', function () {
                   ]
                 }
               }
-            })
-            .then(result => {
-              result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
-                'F00', 'F01'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.firstName).sort(STRING_SORT).should.deep.equal([
+            'F00', 'F01'
+          ]);
         });
 
-        it('should search root model using `require $or` and no values', done => {
-          buildFilter(Person)
+        it('should search root model using `require $or` and no values', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               require: {
@@ -373,20 +303,16 @@ describe('complex filters', function () {
                   $or: []
                 }
               }
-            })
-            .then(result => {
-              result.map(item => item.firstName).should.deep.equal([
-                'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
-              ]);
-              done();
-            })
-            .catch(done);
+            });
+          result.map(item => item.firstName).should.deep.equal([
+            'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'
+          ]);
         });
       });
 
       describe('filter combinations', function() {
-        it('should `require` and `where` on the same relation', done => {
-          buildFilter(Person)
+        it('should `require` and `where` on the same relation', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'movies',
               where: {
@@ -395,21 +321,17 @@ describe('complex filters', function () {
               require: {
                 'movies.name': 'M09'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              person.movies.should.be.an('array');
-              person.movies.length.should.equal(1);
-              person.movies[0].name.should.equal('M09');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
+          person.movies.should.be.an('array');
+          person.movies.length.should.equal(1);
+          person.movies[0].name.should.equal('M09');
         });
 
-        it('should `require` and `where` on different relations', done => {
-          buildFilter(Person)
+        it('should `require` and `where` on different relations', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: 'pets',
               require: {
@@ -418,17 +340,13 @@ describe('complex filters', function () {
               where: {
                 'pets.name': 'P90'
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const person = result[0];
-              person.firstName.should.equal('F09');
-              person.pets.should.be.an('array');
-              person.pets.length.should.equal(1);
-              person.pets[0].name.should.equal('P90');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F09');
+          person.pets.should.be.an('array');
+          person.pets.length.should.equal(1);
+          person.pets[0].name.should.equal('P90');
         });
       });
     });

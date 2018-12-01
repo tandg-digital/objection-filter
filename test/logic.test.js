@@ -28,8 +28,8 @@ describe('logical expression filters', function () {
       });
 
       describe('require using $or', function() {
-        it('should filter based on top level $or', done => {
-          buildFilter(Person)
+        it('should filter based on top level $or', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $or: [
@@ -37,18 +37,14 @@ describe('logical expression filters', function () {
                   { 'movies.name': 'M10' }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
         });
 
-        it('should filter based on nested $or', done => {
-          buildFilter(Person)
+        it('should filter based on nested $or', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $or: [
@@ -61,18 +57,14 @@ describe('logical expression filters', function () {
                   }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(3);
-              const names = result.map(person => person.firstName);
-              names.sort(STRING_SORT).should.deep.equal(['F07', 'F08', 'F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(3);
+          const names = result.map(person => person.firstName);
+          names.sort(STRING_SORT).should.deep.equal(['F07', 'F08', 'F09']);
         });
 
-        it('should filter based on $or with object', done => {
-          buildFilter(Person)
+        it('should filter based on $or with object', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $or: {
@@ -80,18 +72,14 @@ describe('logical expression filters', function () {
                   'movies.code': 'C08'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.sort(STRING_SORT).should.deep.equal(['F08', 'F09']);
         });
 
-        it('should filter with $or before and after property name', done => {
-          buildFilter(Person)
+        it('should filter with $or before and after property name', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $or: [
@@ -113,54 +101,42 @@ describe('logical expression filters', function () {
                   }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(4);
-              const names = result.map(person => person.firstName);
-              names.sort(STRING_SORT).should.deep.equal(['F06', 'F07', 'F08', 'F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(4);
+          const names = result.map(person => person.firstName);
+          names.sort(STRING_SORT).should.deep.equal(['F06', 'F07', 'F08', 'F09']);
         });
 
-        it('should handle early literals on $or after property name', done => {
-          buildFilter(Person)
+        it('should handle early literals on $or after property name', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 firstName: {
                   $or: ['F00', 'F01']
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00', 'F01']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00', 'F01']);
         });
 
-        it('should handle early literals on $and after property name', done => {
-          buildFilter(Person)
+        it('should handle early literals on $and after property name', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 firstName: {
                   $and: ['F00', 'F01']
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(0);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(0);
         });
       });
 
       describe('require using $and', function() {
-        it('should filter based on top level $and', done => {
-          buildFilter(Person)
+        it('should filter based on top level $and', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $and: [
@@ -168,18 +144,14 @@ describe('logical expression filters', function () {
                   { 'movies.code': 'C09' }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F09']);
         });
 
-        it('should filter based on nested $and', done => {
-          buildFilter(Person)
+        it('should filter based on nested $and', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $and: [
@@ -191,18 +163,14 @@ describe('logical expression filters', function () {
                   }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F09']);
         });
 
-        it('should filter based on $and with object', done => {
-          buildFilter(Person)
+        it('should filter based on $and with object', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $and: {
@@ -210,20 +178,16 @@ describe('logical expression filters', function () {
                   'movies.code': 'C09'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F09']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F09']);
         });
       });
 
       describe('require using combinations of $or/$and', function() {
-        it('should filter using top level $and with nested $or', done => {
-          buildFilter(Person)
+        it('should filter using top level $and with nested $or', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $and: [
@@ -236,18 +200,14 @@ describe('logical expression filters', function () {
                   { id: { $gt: 0 } }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00', 'F01']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00', 'F01']);
         });
 
-        it('should filter using top level $or with nested $and', done => {
-          buildFilter(Person)
+        it('should filter using top level $or with nested $and', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $or: [
@@ -265,18 +225,14 @@ describe('logical expression filters', function () {
                   },
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00', 'F01']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00', 'F01']);
         });
 
-        it('should filter using adjacent $and with $or', done => {
-          buildFilter(Person)
+        it('should filter using adjacent $and with $or', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 $and: [
@@ -288,20 +244,16 @@ describe('logical expression filters', function () {
                   { lastName: 'L08' }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00']);
         });
 
-        it('should ensure end of expression $or is scoped', done => {
+        it('should ensure end of expression $or is scoped', async () => {
           // Should generate WHERE "firstName" = 'F01' AND ( ( ... ) OR ( ... ) )
           // not "firstName" = 'F01' OR ( ... ) OR ( ... )
-          buildFilter(Person)
+          const result = await buildFilter(Person)
             .build({
               require: {
                 firstName: 'F00',
@@ -310,20 +262,16 @@ describe('logical expression filters', function () {
                   { lastName: 'L08' }
                 ]
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00']);
         });
       });
 
       describe('require using combinations of $or/$and after the propertyName', () => {
-        it('should filter using top level $and with nested $or', done => {
-          buildFilter(Person)
+        it('should filter using top level $and with nested $or', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 firstName: {
@@ -343,18 +291,14 @@ describe('logical expression filters', function () {
                   ]
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(2);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00', 'F01']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(2);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00', 'F01']);
         });
 
-        it('should filter using top level $or with nested $and', done => {
-          buildFilter(Person)
+        it('should filter using top level $or with nested $and', async () => {
+          const result = await buildFilter(Person)
             .build({
               require: {
                 id: {
@@ -375,20 +319,16 @@ describe('logical expression filters', function () {
                 }
               },
               order: 'firstName'
-            })
-            .then(result => {
-              result.length.should.equal(5);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F03', 'F04', 'F05', 'F06', 'F07']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(5);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F03', 'F04', 'F05', 'F06', 'F07']);
         });
 
-        it('should ensure end of expression $or is scoped', done => {
+        it('should ensure end of expression $or is scoped', async () => {
           // Should generate WHERE "firstName" = 'F01' AND ( ( ... ) OR ( ... ) )
           // not "firstName" = 'F01' OR ( ... ) OR ( ... )
-          buildFilter(Person)
+          const result = await buildFilter(Person)
             .build({
               require: {
                 firstName: {
@@ -399,51 +339,56 @@ describe('logical expression filters', function () {
                   ]
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              const names = result.map(person => person.firstName);
-              names.should.deep.equal(['F00']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          const names = result.map(person => person.firstName);
+          names.should.deep.equal(['F00']);
         });
       });
 
       describe('error conditions', function() {
         const validationError = new Error('should have thrown an error');
 
-        it('should throw an error on initial operator', done => {
-          buildFilter(Person)
-            .build({
-              require: {
-                $gt: 1
-              }
-            })
-            .then(() => done(validationError))
-            .catch(() => done());
+        it('should throw an error on initial operator', async () => {
+          try {
+            await buildFilter(Person)
+              .build({
+                require: {
+                  $gt: 1
+                }
+              });
+          } catch (err) {
+            return;
+          }
+          throw validationError;
         });
 
-        it('should throw an error on early literal', done => {
-          buildFilter(Person)
-            .build({
-              require: {
-                $or: ['invalid']
-              }
-            })
-            .then(() => done(validationError))
-            .catch(() => done());
+        it('should throw an error on early literal', async () => {
+          try {
+            await buildFilter(Person)
+              .build({
+                require: {
+                  $or: ['invalid']
+                }
+              });
+          } catch (err) {
+            return;
+          }
+          throw validationError;
         });
 
-        it('should throw an error on early operator', done => {
-          buildFilter(Person)
-            .build({
-              require: {
-                $or: [{ $gt: 1 }]
-              }
-            })
-            .then(() => done(validationError))
-            .catch(() => done());
+        it('should throw an error on early operator', async () => {
+          try {
+            await buildFilter(Person)
+              .build({
+                require: {
+                  $or: [{ $gt: 1 }]
+                }
+              });
+          } catch (err) {
+            return;
+          }
+          throw validationError;
         });
       });
     });

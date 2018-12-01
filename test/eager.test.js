@@ -28,27 +28,23 @@ describe('eager object notation', function () {
       });
 
       describe('$where on root model', function() {
-        it('should filter on the root model', done => {
-          buildFilter(Person)
+        it('should filter on the root model', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 $where: {
                   firstName: 'F01'
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(1);
-              result[0].firstName.should.equal('F01');
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(1);
+          result[0].firstName.should.equal('F01');
         });
       });
 
       describe('$where on eager models', function() {
-        it('should filter using a single condition', done => {
-          buildFilter(Person)
+        it('should filter using a single condition', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 movies: {
@@ -57,21 +53,17 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.map(result, 'movies')
-                ), 'name'
-              ).should.deep.equal(['M99']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(['M99']);
         });
 
-        it('should filter using a boolean condition', done => {
-          buildFilter(Person)
+        it('should filter using a boolean condition', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 movies: {
@@ -83,21 +75,17 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.map(result, 'movies')
-                ), 'name'
-              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
         });
 
-        it('should filter using a nested boolean condition', done => {
-          buildFilter(Person)
+        it('should filter using a nested boolean condition', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 movies: {
@@ -113,21 +101,17 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.map(result, 'movies')
-                ), 'name'
-              ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).sort(STRING_SORT).should.deep.equal(['M98', 'M99']);
         });
 
-        it('should filter using a nested condition', done => {
-          buildFilter(Person)
+        it('should filter using a nested condition', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 parent: {
@@ -138,21 +122,17 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.filter(_.map(result, 'parent.movies'), _.identity)
-                ), 'name'
-              ).should.deep.equal(['M99']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.filter(_.map(result, 'parent.movies'), _.identity)
+            ), 'name'
+          ).should.deep.equal(['M99']);
         });
 
-        it('should filter alongside default eagers', done => {
-          buildFilter(Person)
+        it('should filter alongside default eagers', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 movies: {
@@ -162,24 +142,20 @@ describe('eager object notation', function () {
                 },
                 pets: true
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.map(result, 'movies')
-                ), 'name'
-              ).should.deep.equal(['M99']);
-              _.flatten(
-                _.map(result, 'pets')
-              ).length.should.be.greaterThan(0);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'movies')
+            ), 'name'
+          ).should.deep.equal(['M99']);
+          _.flatten(
+            _.map(result, 'pets')
+          ).length.should.be.greaterThan(0);
         });
 
-        it('should filter using specified $relation alias', done => {
-          buildFilter(Person)
+        it('should filter using specified $relation alias', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 favorites: {
@@ -189,21 +165,17 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.map(result, 'favorites')
-                ), 'name'
-              ).should.deep.equal(['M99']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.map(result, 'favorites')
+            ), 'name'
+          ).should.deep.equal(['M99']);
         });
 
-        it('should filter using nested $relation aliases', done => {
-          buildFilter(Person)
+        it('should filter using nested $relation aliases', async () => {
+          const result = await buildFilter(Person)
             .build({
               eager: {
                 upper: {
@@ -219,17 +191,13 @@ describe('eager object notation', function () {
                   }
                 }
               }
-            })
-            .then(result => {
-              result.length.should.equal(10);
-              _.map(
-                _.flatten(
-                  _.filter(_.map(result, 'upper.favorites'), _.identity)
-                ), 'name'
-              ).should.deep.equal(['M49']);
-              done();
-            })
-            .catch(done);
+            });
+          result.length.should.equal(10);
+          _.map(
+            _.flatten(
+              _.filter(_.map(result, 'upper.favorites'), _.identity)
+            ), 'name'
+          ).should.deep.equal(['M49']);
         });
       });
 
