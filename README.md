@@ -1,13 +1,16 @@
 [![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
 
-# objection-filter
-objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It was originally based on [objection-find](https://github.com/Vincit/objection-find), but has since moved in a different direction. It aims to fulfil some requirements that occur often during API development:
+# What is objection-filter?
+objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It aims to fulfil some common requirements that occur often during API development:
 
 #### 1. Filtering on nested relations
 For example, if you have the models _Customer_ belongsTo _City_ belongsTo _Country_, we can query all _Customers_ where the _Country_ starts with `A`.
 
 #### 2. Eagerly loading data
 Eagerly load a bunch of related data in a single query. This is useful for getting a list models e.g. _Customers_ then including all their _Orders_ in the same query.
+
+#### 3. Aggregation and reporting
+Creating quick counts and sums on a model can speed up development significantly. An example could be the _numberOfOrders_ for a _Customer_ model.
 
 # Shortcuts
 
@@ -218,7 +221,7 @@ Additionally for any aggregations, you can use them in other expressions above i
 
 For more detailed descriptions of each feature, refer to the [aggregations section](doc/AGGREGATIONS.md).
 
-A basic example of an aggregation is:
+Transform a basic aggregation like this on a `GET /Customers` endpoint:
 
 ```js
 {
@@ -232,4 +235,24 @@ A basic example of an aggregation is:
     ]
   }
 }
+```
+
+...into a result set like this:
+
+```json
+[
+  {
+    "firstName": "John",
+    "lastName": "Smith",
+    "numberOfOrders": 10
+  },{
+    "firstName": "Jane",
+    "lastName": "Bright",
+    "numberOfOrders": 5
+  },{
+    "firstName": "Greg",
+    "lastName": "Parker",
+    "numberOfOrders": 7
+  }
+]
 ```
