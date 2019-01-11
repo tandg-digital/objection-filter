@@ -140,7 +140,9 @@ const buildAggregation = function(aggregation, builder, utils) {
     throw new Error(`Must specify "field" with [${type}] aggregation`);
   }
 
-  const baseIdColumn = Model.tableName + '.' + Model.idColumn;
+  const baseIdColumn = typeof Model.idColumn === 'string'
+    ? Model.tableName + '.' + Model.idColumn
+    : Model.idColumn.map(idColumn => Model.tableName + '.' + idColumn);
 
   // When joining the filter query, the base left-joined table is aliased
   // as the full relation name joined by the : character

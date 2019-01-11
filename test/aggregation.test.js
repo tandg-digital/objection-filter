@@ -25,12 +25,13 @@ const fillArray = function(counts = [], objects = []) {
 describe('aggregation', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
-      let session, Person, Animal;
+      let session, Person, Animal, MovieVersion;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
         Person = session.models.Person;
         Animal = session.models.Animal;
+        MovieVersion = session.models.MovieVersion;
       });
 
       before(function () {
@@ -209,6 +210,23 @@ describe('aggregation', function () {
           const counts = result.map(item => item.count);
           counts.length.should.equal(100);
           counts.should.deep.equal(fillArray([10, 90], [1, 0]));
+        });
+      });
+
+      describe('composite ids', function() {
+        it('should aggregate if root model has composite id', async function() {
+          const result = await buildFilter(MovieVersion)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    relation: 'movie'
+                  }
+                ]
+              }
+            });
+          result.map(item => item.count).should.deep.equal(fillArray([100], [1]));
         });
       });
 
