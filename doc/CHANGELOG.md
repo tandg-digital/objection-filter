@@ -1,5 +1,9 @@
 # Changelog
 
+### 2.1.0
+
+* Fix [bug](https://github.com/tandg-digital/objection-filter/issues/14) when aggregating on a base model with a composite id
+
 ### 2.0.0
 
 * Add [aggregations](doc/AGGREGATIONS.md) feature
