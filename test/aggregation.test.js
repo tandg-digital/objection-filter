@@ -194,6 +194,7 @@ describe('aggregation', function () {
         it('should apply distinct with filter', async () => {
           const result = await buildFilter(Animal)
             .build({
+              order: 'count desc',
               eager: {
                 $aggregations: [
                   {
@@ -480,6 +481,7 @@ describe('aggregation', function () {
 
           const result = await buildFilter(Animal, null, { onAggBuild })
             .build({
+              order: 'count desc',
               eager: {
                 $aggregations: [
                   {
