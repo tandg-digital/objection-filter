@@ -25,13 +25,14 @@ const fillArray = function(counts = [], objects = []) {
 describe('aggregation', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
-      let session, Person, Animal, MovieVersion;
+      let session, Person, Animal, MovieVersion, Movie;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
         Person = session.models.Person;
         Animal = session.models.Animal;
         MovieVersion = session.models.MovieVersion;
+        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -44,6 +45,32 @@ describe('aggregation', function () {
 
       before(function () {
         return testUtils.insertData(session, { persons: 10, pets: 10, movies: 10 });
+      });
+
+      describe('defaults', function() {
+        it('should skip if aggregations = []', async () => {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: []
+              }
+            });
+          result.map(item => item.count).should.deep.equal(fillArray([10], [undefined]));
+        });
+
+        it('should default to "count"', async () => {
+          const result = await buildFilter(Person)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    relation: 'pets'
+                  }
+                ]
+              }
+            });
+          result.map(item => item.count).should.deep.equal(fillArray([10], [10]));
+        });
       });
 
       describe('count without filters', function() {
@@ -228,6 +255,27 @@ describe('aggregation', function () {
               }
             });
           result.map(item => item.count).should.deep.equal(fillArray([100], [1]));
+        });
+
+        it('should aggregate if outer model has composite id', async () => {
+          // Ensure that 0-counts work as expected, rather than 1 on something like count(*)
+          await MovieVersion.query()
+            .delete()
+            .where({ movieId: 1 });
+
+          const result = await buildFilter(Movie)
+            .build({
+              eager: {
+                $aggregations: [
+                  {
+                    type: 'count',
+                    relation: 'version'
+                  }
+                ]
+              },
+              order: 'id'
+            });
+          result.map(item => item.count).should.deep.equal(fillArray([1, 99], [0, 1]));
         });
       });
 
