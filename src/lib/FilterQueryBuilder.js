@@ -165,7 +165,7 @@ const buildAggregation = function(aggregation, builder, utils) {
     .query()
     .select(baseIdColumn)
     .select(knex.raw(`${type}(${distinctTag}??) as ??`, [
-      `${fullOuterRelation}.${field || OuterModel.idColumn}`,
+      field ? `${fullOuterRelation}.${field}` : fullIdColumns[0],
       columnAlias
     ]))
     .leftJoinRelation(relation);
