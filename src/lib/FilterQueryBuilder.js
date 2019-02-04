@@ -446,7 +446,7 @@ module.exports.applyOrder = applyOrder;
  * @param {Builder} builder An instance of a knex builder
  * @param {Array<String>} fields A list of fields to select
   */
-const selectFields = (fields = [], builder, relationName) => {
+const selectFields = (fields, builder, relationName) => {
   if (fields.length === 0) return;
   const { raw } = builder.modelClass().knex();
   // HACK: sqlite incorrect column alias when selecting 1 column
