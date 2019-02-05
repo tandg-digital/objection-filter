@@ -208,7 +208,7 @@ const buildAggregation = function(aggregation, builder, utils) {
   return aggregationQuery;
 };
 
-const applyAggregations = function(aggregations = [], builder, utils) {
+const applyAggregations = function(aggregations, builder, utils) {
   if (aggregations.length === 0) return;
 
   const Model = builder.modelClass();
@@ -248,7 +248,7 @@ const applyAggregations = function(aggregations = [], builder, utils) {
  * @param {Array<string>} path An array of the current relation
  * @param {Object} utils
  */
-const applyEagerFilter = function(expression = {}, builder, path, utils) {
+const applyEagerFilter = function(expression, builder, path, utils) {
   debug('applyEagerFilter(', { expression, path }, ')');
 
   // Apply a where on the root model
