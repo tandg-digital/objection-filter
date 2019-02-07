@@ -1,6 +1,6 @@
 {
   "name": "objection-filter",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "engines": {
@@ -12,7 +12,7 @@
     "test": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec test/**/*.test.js src/**/*.test.js",
     "test-target": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec",
     "prepublish": "yarn run build",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=html"
   },
   "repository": {
     "type": "git",
