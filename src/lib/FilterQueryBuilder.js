@@ -363,7 +363,7 @@ const applyRequire = function (filter = {}, builder, utils) {
 
     // If there were related properties, join onto the filter
     const joinRelation = createRelationExpression(propertiesSet);
-    if (joinRelation) filterQuery.joinRelation(joinRelation);
+    filterQuery.joinRelation(joinRelation);
 
     const filterQueryAlias = 'filter_query';
     builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
