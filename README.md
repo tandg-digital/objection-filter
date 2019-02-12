@@ -1,7 +1,9 @@
 [![Build Status](https://travis-ci.org/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.org/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
 
 # What is objection-filter?
-objection-filter is a filtering module for the [objection.js](https://github.com/Vincit/objection.js) ORM. It aims to fulfil some common requirements that occur often during API development:
+objection-filter is a plugin for the [objection.js](https://github.com/Vincit/objection.js) ORM. It's designed to allow powerful filters and aggregations on your API.
+
+Some examples of what you can do include:
 
 #### 1. Filtering on nested relations
 For example, if you have the models _Customer_ belongsTo _City_ belongsTo _Country_, we can query all _Customers_ where the _Country_ starts with `A`.
