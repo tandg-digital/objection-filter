@@ -417,7 +417,7 @@ module.exports.applyFields = applyFields;
 
 var applyLimit = function applyLimit(limit, offset, page, perPage, builder) {
   if (page && perPage) {
-    builder.page(page, perPage);
+    builder.page(page - 1, perPage);
     return builder;
   }
   if (typeof limit === 'number' && typeof offset === 'number') {
