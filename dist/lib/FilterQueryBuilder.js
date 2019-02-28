@@ -79,7 +79,9 @@ module.exports = function () {
           offset = params.offset,
           orderBy = params.orderBy,
           includes = params.includes,
-          filter = params.filter;
+          filter = params.filter,
+          page = params.page,
+          perPage = params.perPage;
 
 
       applyFields(fields, this._builder);
@@ -92,7 +94,7 @@ module.exports = function () {
       if (includes) {
         applyEager(includes, this._builder, this.utils);
       }
-      applyLimit(limit, offset, this._builder);
+      applyLimit(limit, offset, page, perPage, this._builder);
 
       return this._builder;
     }
@@ -413,7 +415,11 @@ var applyFields = function applyFields() {
 };
 module.exports.applyFields = applyFields;
 
-var applyLimit = function applyLimit(limit, offset, builder) {
+var applyLimit = function applyLimit(limit, offset, page, perPage, builder) {
+  if (page && perPage) {
+    builder.page(page, perPage);
+    return builder;
+  }
   if (typeof limit === 'number' && typeof offset === 'number') {
     builder.page(parseInt(offset / limit), limit);
     return builder;
