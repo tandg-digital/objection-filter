@@ -448,12 +448,12 @@ module.exports.applyOrder = applyOrder;
   */
 const selectFields = (fields, builder, relationName) => {
   if (fields.length === 0) return;
-  const { raw } = builder.modelClass().knex();
+  const knex = builder.modelClass().knex();
   // HACK: sqlite incorrect column alias when selecting 1 column
   // TODO: investigate sqlite column aliasing on eager models
   if (fields.length === 1 && !relationName) {
     const field = fields[0].split('.')[1];
-    return builder.select(raw('?? as ??', [fields[0], field]));
+    return builder.select(knex.raw('?? as ??', [fields[0], field]));
   }
   if (!relationName) return builder.select(fields);
 
