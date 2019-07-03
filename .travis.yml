@@ -1,8 +1,11 @@
 sudo: false
 language: node_js
 node_js:
-- '8'
-- '7'
+  - '8'
+  - '7'
+services:
+  - postgresql
+  - mysql
 before_script:
   - psql -c "create database objection_filter_test;" -U postgres
   - mysql -e "create database objection_filter_test;"
