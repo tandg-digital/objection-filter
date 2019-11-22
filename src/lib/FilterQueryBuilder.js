@@ -266,6 +266,16 @@ const applyWhere = function(filter = {}, builder, utils, baseModel) {
       );
     }
 
+    if (relationName) {
+      // Root level where should include the root table name
+      const fullyQualifiedProperty = `${relationName || Model.tableName}.${propertyName}`
+      return applyPropertyExpression(
+        fullyQualifiedProperty,
+        andExpression,
+        builder
+      );
+    }
+
     // Eager query fields should include the eager model table name
     builder.modifyEager(relationName, eagerBuilder => {
       const fullyQualifiedProperty = `${
@@ -309,6 +319,12 @@ const applyOrder = function(order, builder, baseModel) {
       const fullyQualifiedColumn = _.includes(baseFields, propertyName)
         ? `${baseModel || Model.tableName}.${propertyName}`
         : propertyName;
+      return builder.orderBy(fullyQualifiedColumn, direction);
+    }
+
+    if (relationName) {
+      // Root level where should include the root table name
+      const fullyQualifiedColumn = `${relationName || Model.tableName}.${propertyName}`
       return builder.orderBy(fullyQualifiedColumn, direction);
     }
 

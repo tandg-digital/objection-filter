@@ -302,6 +302,12 @@ var applyWhere = function applyWhere() {
       return applyPropertyExpression(fullyQualifiedProperty, andExpression, builder);
     }
 
+    if (relationName) {
+      // Root level where should include the root table name
+      var _fullyQualifiedProperty = (relationName || Model.tableName) + '.' + propertyName;
+      return applyPropertyExpression(_fullyQualifiedProperty, andExpression, builder);
+    }
+
     // Eager query fields should include the eager model table name
     builder.modifyEager(relationName, function (eagerBuilder) {
       var fullyQualifiedProperty = eagerBuilder.modelClass().tableName + '.' + propertyName;
@@ -341,6 +347,12 @@ var applyOrder = function applyOrder(order, builder, baseModel) {
       // Root level where should include the root table name
       var fullyQualifiedColumn = _.includes(baseFields, propertyName) ? (baseModel || Model.tableName) + '.' + propertyName : propertyName;
       return builder.orderBy(fullyQualifiedColumn, direction);
+    }
+
+    if (relationName) {
+      // Root level where should include the root table name
+      var _fullyQualifiedColumn = (relationName || Model.tableName) + '.' + propertyName;
+      return builder.orderBy(_fullyQualifiedColumn, direction);
     }
 
     // For now, only allow sub-query ordering of eager expressions
