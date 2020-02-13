@@ -226,7 +226,7 @@ The same thing can be applied for aggregations. We don't want anyone doing `GET 
 ```js
 const createOnAggBuild = tenantId => Model => {
   if (Model.name === 'Shop')
-    builder.where({ tenantId });
+    return Model.query().where({ tenantId });
 };
 
 // Route handler for GET /ShopTypes
