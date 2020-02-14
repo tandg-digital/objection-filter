@@ -31,7 +31,7 @@ const toRelationSubExpression = (tree, relationName) => {
  * expression = '[schema.[schemaAttributes,organization]]'
  * @param {Array<String>} fields A list of fields
  */
-const createRelationExpression = (fields = []) => {
+const createRelationExpression = (fields) => {
   // For each field, set some arbitrarily deep property
   const tree = {};
   fields.forEach(field => {

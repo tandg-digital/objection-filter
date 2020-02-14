@@ -304,6 +304,15 @@ function createModels(knex) {
             from: 'Movie.categoryId',
             to: 'Category.id'
           }
+        },
+
+        version: {
+          relation: objection.HasOneRelation,
+          modelClass: MovieVersion,
+          join: {
+            from: 'Movie.id',
+            to: 'Movie_Version.movieId'
+          }
         }
       };
     }

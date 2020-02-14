@@ -45,7 +45,8 @@ describe('complex filters', function () {
                 'movies.name': {
                   $invalid: 'M09'
                 }
-              }
+              },
+              order: 'firstName'
             });
           result.length.should.equal(10);
           result.map(item => item.firstName).should.deep.equal([
@@ -169,7 +170,8 @@ describe('complex filters', function () {
                 'movies.code': {
                   $exists: true
                 }
-              }
+              },
+              order: 'firstName'
             });
           result.length.should.equal(5);
           result.map(item => item.firstName).should.deep.equal([
@@ -184,7 +186,8 @@ describe('complex filters', function () {
                 'movies.code': {
                   $exists: false
                 }
-              }
+              },
+              order: 'firstName'
             });
           result.length.should.equal(5);
           result.map(item => item.firstName).should.deep.equal([
@@ -230,7 +233,8 @@ describe('complex filters', function () {
                 'movies.id': {
                   $in: [88, 98]
                 }
-              }
+              },
+              order: 'firstName'
             });
           result.length.should.equal(2);
           result.map(item => item.firstName).should.deep.equal([
@@ -302,7 +306,8 @@ describe('complex filters', function () {
                 'movies.name': {
                   $or: []
                 }
-              }
+              },
+              order: 'firstName'
             });
           result.map(item => item.firstName).should.deep.equal([
             'F00', 'F01', 'F02', 'F03', 'F04', 'F05', 'F06', 'F07', 'F08', 'F09'

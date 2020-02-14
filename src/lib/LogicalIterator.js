@@ -20,7 +20,7 @@ const arrayize = function(objectOrArray) {
  * @param {Object} expression
  * @param {Function} test A function to determine whether to include the property
  */
-const getPropertiesFromExpression = function(expression = {}, test = () => true) {
+const getPropertiesFromExpression = function(expression, test = () => true) {
   let properties = [];
 
   for (const lhs in expression) {

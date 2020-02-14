@@ -165,7 +165,7 @@ const buildAggregation = function(aggregation, builder, utils) {
     .query()
     .select(baseIdColumn)
     .select(knex.raw(`${type}(${distinctTag}??) as ??`, [
-      `${fullOuterRelation}.${field || OuterModel.idColumn}`,
+      field ? `${fullOuterRelation}.${field}` : fullIdColumns[0],
       columnAlias
     ]))
     .leftJoinRelation(relation);
@@ -208,7 +208,7 @@ const buildAggregation = function(aggregation, builder, utils) {
   return aggregationQuery;
 };
 
-const applyAggregations = function(aggregations = [], builder, utils) {
+const applyAggregations = function(aggregations, builder, utils) {
   if (aggregations.length === 0) return;
 
   const Model = builder.modelClass();
@@ -248,7 +248,7 @@ const applyAggregations = function(aggregations = [], builder, utils) {
  * @param {Array<string>} path An array of the current relation
  * @param {Object} utils
  */
-const applyEagerFilter = function(expression = {}, builder, path, utils) {
+const applyEagerFilter = function(expression, builder, path, utils) {
   debug('applyEagerFilter(', { expression, path }, ')');
 
   // Apply a where on the root model
@@ -363,7 +363,7 @@ const applyRequire = function (filter = {}, builder, utils) {
 
     // If there were related properties, join onto the filter
     const joinRelation = createRelationExpression(propertiesSet);
-    if (joinRelation) filterQuery.joinRelation(joinRelation);
+    filterQuery.joinRelation(joinRelation);
 
     const filterQueryAlias = 'filter_query';
     builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
@@ -446,14 +446,14 @@ module.exports.applyOrder = applyOrder;
  * @param {Builder} builder An instance of a knex builder
  * @param {Array<String>} fields A list of fields to select
   */
-const selectFields = (fields = [], builder, relationName) => {
+const selectFields = (fields, builder, relationName) => {
   if (fields.length === 0) return;
-  const { raw } = builder.modelClass().knex();
+  const knex = builder.modelClass().knex();
   // HACK: sqlite incorrect column alias when selecting 1 column
   // TODO: investigate sqlite column aliasing on eager models
   if (fields.length === 1 && !relationName) {
     const field = fields[0].split('.')[1];
-    return builder.select(raw('?? as ??', [fields[0], field]));
+    return builder.select(knex.raw('?? as ??', [fields[0], field]));
   }
   if (!relationName) return builder.select(fields);
 

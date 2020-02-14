@@ -48,15 +48,28 @@ describe('basic filters', function () {
           result[0].firstName.should.equal('F01');
         });
 
-        it('should select limited fields', async () => {
-          const result = await buildFilter(Person)
+        it('should select single field using alias', async () => {
+          const query = buildFilter(Person)
             .build({
               limit: 1,
               fields: ['id']
             });
+          query.toSql().replace(/"|`/g, '').should.equal('select Person.id as id from Person limit 1');
+          const result = await query;
           result.should.be.an.an('array');
           result.should.have.length(1);
           _.keys(result[0]).should.deep.equal(['id']);
+        });
+
+        it('should select limited fields', async () => {
+          const result = await buildFilter(Person)
+            .build({
+              limit: 1,
+              fields: ['id', 'firstName']
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(1);
+          _.keys(result[0]).should.deep.equal(['id', 'firstName']);
         });
 
         it('should order by descending', async () => {
