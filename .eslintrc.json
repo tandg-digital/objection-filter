@@ -24,7 +24,8 @@
     "no-nested-ternary": "off",
     "one-var-declaration-per-line": "off",
     "one-var": "off",
-    "prefer-destructuring": "off"
+    "prefer-destructuring": "off",
+    "no-trailing-spaces": "off"
   },
   "env": {
     "node": true,

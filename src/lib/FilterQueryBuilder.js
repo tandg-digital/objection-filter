@@ -39,10 +39,13 @@ module.exports = class FilterQueryBuilder {
     this.Model = Model;
     this._builder = Model.query(trx);
 
-    const { operators = {}, onAggBuild } = options;
+    const { operators = {}, onAggBuild, config } = options;
 
     // Initialize instance specific utilities
     this.utils = Operations({ operators, onAggBuild });
+
+    // Set configs custom 
+    this.config = config || {};
   }
 
   build(params = {}) {
@@ -60,6 +63,11 @@ module.exports = class FilterQueryBuilder {
 
     applyOrder(order, this._builder);
     applyEager(eager, this._builder, this.utils);
+
+    if (this.config.maxLimit && this.config.maxLimit < limit) {
+      throw new Error(`The maximum limit is ${this.config.maxLimit} you sent ${limit}.`);
+    } 
+
     applyLimit(limit, offset, this._builder);
 
     return this._builder;
