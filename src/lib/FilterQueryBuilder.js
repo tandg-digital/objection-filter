@@ -254,7 +254,7 @@ const applyEagerFilter = function(expression, builder, path, utils) {
 
   // Apply a where on the root model
   if (expression.$where) {
-    const filterCopy = { ...expression.$where };
+    const filterCopy = Object.assign({}, expression.$where);
     applyRequire(filterCopy, builder, utils);
     delete expression.$where;
   }
@@ -281,7 +281,7 @@ const applyEagerFilter = function(expression, builder, path, utils) {
 
     if (rhs.$where) {
       debug('modifyGraph(', { relationExpression, filter: rhs.$where }, ')');
-      const filterCopy = { ...rhs.$where };
+      const filterCopy = Object.assign({}, rhs.$where);
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
       builder.modifyGraph(relationExpression, subQueryBuilder => {
