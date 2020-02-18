@@ -100,7 +100,7 @@ module.exports.Operations = function(options) {
   const { operators, onAggBuild } = options;
 
   // Custom operators take override default operators
-  const allOperators = Object.assign({}, defaultOperators, operators);
+  const allOperators = { ...defaultOperators, ...operators };
 
   /**
    * Apply a subset of operators on a single property
