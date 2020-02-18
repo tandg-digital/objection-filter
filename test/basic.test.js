@@ -54,7 +54,11 @@ describe('basic filters', function () {
               limit: 1,
               fields: ['id']
             });
-          query.toSql().replace(/"|`/g, '').should.equal('select Person.id as id from Person limit 1');
+          query.toKnexQuery()
+            .toSQL()
+            .sql
+            .replace(/"|`/g, '')
+            .should.equal('select Person.id as id from Person limit ?');
           const result = await query;
           result.should.be.an.an('array');
           result.should.have.length(1);
