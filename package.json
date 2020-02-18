@@ -47,12 +47,15 @@
     "mocha": "^3.5.0",
     "mysql": "^2.16.0",
     "nyc": "^11.1.0",
-    "objection": "^1.0.0",
+    "objection": "^2.1.2",
     "pg": "^7.4.3",
     "sqlite3": "^3.1.13"
   },
   "dependencies": {
     "debug": "^3.1.0",
     "lodash": "^4.17.5"
+  },
+  "peerDependencies": {
+    "objection": "^2.1.2"
   }
 }

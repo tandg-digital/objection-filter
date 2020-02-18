@@ -65,13 +65,14 @@ module.exports = class FilterQueryBuilder {
     return this._builder;
   }
 
-  count() {
-    return this._builder.clone()
+  async count() {
+    const { count } = await this._builder.clone()
       .clear(/orderBy|offset|limit/)
-      .clearEager()
+      .clearWithGraph()
       .count('* AS count')
-      .pluck('count')
       .first();
+
+    return count;
   }
 
   /**
@@ -168,7 +169,7 @@ const buildAggregation = function(aggregation, builder, utils) {
       field ? `${fullOuterRelation}.${field}` : fullIdColumns[0],
       columnAlias
     ]))
-    .leftJoinRelation(relation);
+    .leftJoinRelated(relation);
 
   // Apply filters to models on the aggregation path
   if (onAggBuild) {
@@ -279,11 +280,11 @@ const applyEagerFilter = function(expression, builder, path, utils) {
     const relationExpression = newPath.join('.');
 
     if (rhs.$where) {
-      debug('modifyEager(', { relationExpression, filter: rhs.$where }, ')');
+      debug('modifyGraph(', { relationExpression, filter: rhs.$where }, ')');
       const filterCopy = Object.assign({}, rhs.$where);
 
       // TODO: Could potentially apply all 'modifyEagers' at the end
-      builder.modifyEager(relationExpression, subQueryBuilder => {
+      builder.modifyGraph(relationExpression, subQueryBuilder => {
         applyRequire(filterCopy, subQueryBuilder, utils);
       });
 
@@ -302,7 +303,7 @@ const applyEagerFilter = function(expression, builder, path, utils) {
 
 const applyEagerObject = function(expression, builder, utils) {
   const expressionWithoutFilters = applyEagerFilter(expression, builder, [], utils);
-  builder.eager(expressionWithoutFilters);
+  builder.withGraphFetched(expressionWithoutFilters);
 };
 
 const applyEager = function (eager, builder, utils) {
@@ -310,7 +311,7 @@ const applyEager = function (eager, builder, utils) {
     return applyEagerObject(eager, builder, utils);
   }
 
-  builder.eager(eager);
+  builder.withGraphFetched(eager);
 };
 module.exports.applyEager = applyEager;
 
@@ -399,7 +400,7 @@ const applyWhere = function (filter = {}, builder, utils) {
     }
 
     // Eager query fields should include the eager model table name
-    builder.modifyEager(relationName, eagerBuilder => {
+    builder.modifyGraph(relationName, eagerBuilder => {
       const fullyQualifiedProperty = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
       applyPropertyExpression(fullyQualifiedProperty, andExpression, eagerBuilder);
     });
@@ -431,7 +432,7 @@ const applyOrder = function (order, builder) {
     }
 
     // For now, only allow sub-query ordering of eager expressions
-    builder.modifyEager(relationName, eagerBuilder => {
+    builder.modifyGraph(relationName, eagerBuilder => {
       const fullyQualifiedColumn = `${eagerBuilder.modelClass().tableName}.${propertyName}`;
       eagerBuilder.orderBy(fullyQualifiedColumn, direction);
     });
@@ -457,7 +458,7 @@ const selectFields = (fields, builder, relationName) => {
   }
   if (!relationName) return builder.select(fields);
 
-  builder.modifyEager(relationName, eagerQueryBuilder => {
+  builder.modifyGraph(relationName, eagerQueryBuilder => {
     eagerQueryBuilder
       .select(fields.map(field => `${eagerQueryBuilder.modelClass().tableName}.${field}`));
   });
