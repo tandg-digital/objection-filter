@@ -21,9 +21,18 @@ module.exports = {
     client: 'postgres',
     connection: {
       host: '127.0.0.1',
-      database: 'objection_filter_test',
-      user: 'postgres',
-      password: 'postgres'
+      database: 'objection_filter_test'
+    },
+    pool: {
+      min: 0,
+      max: 10
+    }
+  }, {
+    client: 'mysql',
+    connection: {
+      host: '127.0.0.1',
+      user: 'travis',
+      database: 'objection_filter_test'
     },
     pool: {
       min: 0,
