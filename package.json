@@ -9,7 +9,7 @@
   "scripts": {
     "build": "babel src --presets babel-preset-es2015 --out-dir dist",
     "pretest": "eslint src/**/*.js",
-    "test": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec test/**/*.test.js src/**/*.test.js",
+    "test": "cross-env NODE_ENV=test nyc mocha --exit --slow 10 --timeout 5000 --reporter spec test/**/*.test.js src/**/*.test.js",
     "test-target": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec",
     "prepublish": "yarn run build",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
