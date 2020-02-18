@@ -4,7 +4,7 @@
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "engines": {
-    "node": ">=7.6.0"
+    "node": ">=8.0.0"
   },
   "scripts": {
     "build": "babel src --presets babel-preset-es2015 --out-dir dist",
