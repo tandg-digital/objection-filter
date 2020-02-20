@@ -231,10 +231,6 @@ function createModels(knex) {
       return 'Person';
     }
 
-    firstName() {
-      return this.firstName + ' ' + this.lastName;
-    }
-
     static get relationMappings() {
       return {
         parent: {
