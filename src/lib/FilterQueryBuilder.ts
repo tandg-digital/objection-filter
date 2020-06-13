@@ -15,28 +15,45 @@
  * However, for 'require' conditions, this might be possible since ALL variables exist
  * in the same scope, since there's a join
  */
-const _ = require('lodash');
-const { debug } = require('../config');
-const {
+import * as _  from 'lodash';
+import { debug } from '../config';
+import {
   sliceRelation,
   Operations
-} = require('./utils');
-const {
+} from './utils';
+import {
   createRelationExpression
-} = require('./ExpressionBuilder');
-const {
+} from './ExpressionBuilder';
+import {
   iterateLogicalExpression,
   getPropertiesFromExpression
-} = require('./LogicalIterator');
+} from './LogicalIterator';
 
-module.exports = class FilterQueryBuilder {
+// Types
+import {
+  Model as ObjModel,
+  QueryBuilder,
+  Transaction
+} from 'objection';
+import {
+  FilterQueryBuilderOptions,
+  OperationUtils,
+  FilterQueryParams
+} from './types';
+
+export default class FilterQueryBuilder<M extends ObjModel> {
+  Model: M;
+  _builder: QueryBuilder<M>;
+  utils: OperationUtils<M>;
+
   /**
    * @param {Model} Model
    * @param {Transaction} trx
    * @param {Object} options.operators Custom operator handlers
    */
-  constructor(Model, trx, options = {}) {
+  constructor(Model: M, trx: Transaction, options: FilterQueryBuilderOptions<M> = {}) {
     this.Model = Model;
+    // @ts-ignore
     this._builder = Model.query(trx);
 
     const { operators = {}, onAggBuild } = options;
@@ -45,7 +62,7 @@ module.exports = class FilterQueryBuilder {
     this.utils = Operations({ operators, onAggBuild });
   }
 
-  build(params = {}) {
+  build(params: FilterQueryParams = {}) {
     const {
       fields,
       limit,
@@ -66,6 +83,7 @@ module.exports = class FilterQueryBuilder {
   }
 
   async count() {
+    // @ts-ignore
     const { count } = await this._builder.clone()
       .clear(/orderBy|offset|limit/)
       .clearWithGraph()
@@ -306,14 +324,13 @@ const applyEagerObject = function(expression, builder, utils) {
   builder.withGraphFetched(expressionWithoutFilters);
 };
 
-const applyEager = function (eager, builder, utils) {
+export function applyEager(eager, builder, utils) {
   if (typeof eager === 'object') {
     return applyEagerObject(eager, builder, utils);
   }
 
   builder.withGraphFetched(eager);
 };
-module.exports.applyEager = applyEager;
 
 /**
  * Test if a property is a related property
@@ -332,7 +349,7 @@ const isRelatedProperty = function(name) {
  * @param {Object} filter
  * @param {QueryBuilder} builder The root query builder
  */
-const applyRequire = function (filter = {}, builder, utils) {
+export function applyRequire(filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
 
   // If there are no properties at all, just return
@@ -376,7 +393,6 @@ const applyRequire = function (filter = {}, builder, utils) {
 
   return builder;
 };
-module.exports.applyRequire = applyRequire;
 
 /**
  * Apply an entire where expression to the query builder
@@ -386,7 +402,7 @@ module.exports.applyRequire = applyRequire;
  * @param {Object} filter The filter object
  * @param {QueryBuilder} builder The root query builder
  */
-const applyWhere = function (filter = {}, builder, utils) {
+export function applyWhere(filter = {}, builder, utils) {
   const { applyPropertyExpression } = utils;
   const Model = builder.modelClass();
 
@@ -408,7 +424,6 @@ const applyWhere = function (filter = {}, builder, utils) {
 
   return builder;
 };
-module.exports.applyWhere = applyWhere;
 
 /**
  * Order the result by a root model field or order related models
@@ -417,7 +432,7 @@ module.exports.applyWhere = applyWhere;
  * @param {String} order An comma delimited order expression
  * @param {QueryBuilder} builder The root query builder
  */
-const applyOrder = function (order, builder) {
+export function applyOrder(order, builder) {
   if (!order) return;
   const Model = builder.modelClass();
 
@@ -440,14 +455,13 @@ const applyOrder = function (order, builder) {
 
   return builder;
 };
-module.exports.applyOrder = applyOrder;
 
 /**
  * Based on a relation name, select a subset of fields. Do nothing if there are no fields
  * @param {Builder} builder An instance of a knex builder
  * @param {Array<String>} fields A list of fields to select
   */
-const selectFields = (fields, builder, relationName) => {
+const selectFields = (fields, builder, relationName?: string) => {
   if (fields.length === 0) return;
   const knex = builder.modelClass().knex();
   // HACK: sqlite incorrect column alias when selecting 1 column
@@ -469,7 +483,7 @@ const selectFields = (fields, builder, relationName) => {
  * @param {Array<String>} fields An array of dot notation fields
  * @param {QueryBuilder} builder The root query builder
  */
-const applyFields = function (fields = [], builder) {
+export function applyFields(fields = [], builder) {
   const Model = builder.modelClass();
 
   // Group fields by relation e.g. ["a.b.name", "a.b.id"] => {"a.b": ["name", "id"]}
@@ -496,12 +510,10 @@ const applyFields = function (fields = [], builder) {
 
   return builder;
 };
-module.exports.applyFields = applyFields;
 
-const applyLimit = function (limit, offset, builder) {
+export function applyLimit(limit, offset, builder) {
   if (limit) builder.limit(limit);
   if (offset) builder.offset(offset);
 
   return builder;
 };
-module.exports.applyLimit = applyLimit;
