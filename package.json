@@ -46,7 +46,7 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.13.0",
-    "knex": "^0.21.1",
+    "knex": "0.20.15",
     "mocha": "^7.0.1",
     "mysql": "^2.16.0",
     "nyc": "^15.0.0",
