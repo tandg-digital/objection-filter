@@ -119,7 +119,7 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
   };
   const { operators, onAggBuild } = options;
 
-  // Custom operators take override default operators
+  // Custom operators override default operators
   const allOperators = { ...defaultOperators, ...operators };
 
   // TODO: Generalize
