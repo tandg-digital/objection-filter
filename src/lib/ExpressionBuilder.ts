@@ -29,7 +29,7 @@ function toRelationSubExpression(tree: object, relationName?: string): string {
  * expression = '[schema.[schemaAttributes,organization]]'
  * @param {Array<String>} fields A list of fields
  */
-export function createRelationExpression(fields: string[]) {
+export function createRelationExpression(fields: string[]): string {
   // For each field, set some arbitrarily deep property
   const tree = {};
   fields.forEach(field => {
