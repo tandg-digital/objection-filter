@@ -1,4 +1,7 @@
-import { QueryBuilder, Model, Expression as ObjExpression } from 'objection';
+import {
+  QueryBuilder,
+  Model
+} from 'objection';
 
 // Shared types
 export interface Relation {
@@ -8,6 +11,10 @@ export interface Relation {
 }
 
 export type Primitive = number | string | null;
+
+export interface BaseModel extends Model {
+  count?: number;
+}
 
 // OperationOptions types and subtypes
 type OperationHandler<M extends Model> = (
@@ -20,21 +27,26 @@ export type Operators<M extends Model> = {
   [f: string]: OperationHandler<M>;
 }
 
+export type AggregationCallback = <M extends Model, K extends typeof Model>(
+  RelatedModelClass: K
+) => QueryBuilder<M>;
+
 export interface OperationOptions<M extends Model> {
   operators: Operators<M>;
-  onAggBuild: Function;
+  onAggBuild: AggregationCallback;
 }
 
 export interface OperationUtils<M extends Model> {
   applyPropertyExpression: OperationHandler<M>;
-  onAggBuild: Function;
+  onAggBuild: AggregationCallback;
 }
 
 // LogicalIterator types and subtypes
 export type ExpressionValue = Expression | string | number;
-export type Expression = {
+export type ExpressionObject = {
   [key: string]: ExpressionValue;
 };
+export type Expression = ExpressionObject | ExpressionObject[] | string | number;
 export type PropertyOmissionPredicate = (
   propertyName?: string
 ) => boolean;
@@ -61,7 +73,7 @@ export interface LogicalExpressionIteratorOptions<M extends Model> {
 // FilterQueryBuilder types and subtypes
 export interface FilterQueryBuilderOptions<M extends Model> {
   operators?: Operators<M>;
-  onAggBuild?: Function;
+  onAggBuild?: AggregationCallback;
 }
 
 export interface FilterQueryParams {
@@ -69,7 +81,24 @@ export interface FilterQueryParams {
   limit?: number;
   offset?: number;
   order?: string;
-  eager?: Object;
-  where?: Object;
-  require?: Object;
+  eager?: string | EagerExpression;
+  where?: Expression;
+  require?: Expression;
 }
+
+export interface AggregationConfig {
+  relation?: string;
+  $where?: Expression;
+  distinct?: boolean;
+  alias?: string;
+  type?: string;
+  field?: string;
+}
+
+// Filter definition
+export type EagerExpression = {
+  $where?: Expression,
+  $aggregations?: AggregationConfig[]
+}
+
+export type RequireExpression = Expression;

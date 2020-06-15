@@ -9,7 +9,7 @@ import {
   Expression,
   ExpressionValue,
   PropertyOmissionPredicate,
-  Item,
+  ExpressionObject,
   LogicalExpressionIteratorOptions
 } from './types';
 
@@ -34,7 +34,7 @@ function arrayize<Item>(objectOrArray: Object | Item[]): Item[] {
 };
 
 // Helper function to confirm the rhs Expression is an object of SubExpressions
-function hasSubExpression(lhs: string, rhs: ExpressionValue): rhs is { [key: string]: Expression } {
+function hasSubExpression(lhs: string, rhs: ExpressionValue): rhs is ExpressionObject {
   return [OR, AND].includes(lhs);
 }
 
@@ -49,7 +49,7 @@ export function getPropertiesFromExpression(
 ): string[] {
   let properties: string[] = [];
 
-  for (const lhs in expression) {
+  for (const lhs in expression as ExpressionObject) {
     const rhs = expression[lhs];
 
     if (hasSubExpression(lhs, rhs)) {
@@ -94,7 +94,7 @@ export function iterateLogicalExpression<M extends Model>({
    * @param {Function} propertyTransform A preOnExit transform for the property name
    */
   const iterator = function<M>(
-    expression,
+    expression: Expression,
     builder: M,
     or = false,
     propertyTransform = p => p
@@ -107,11 +107,11 @@ export function iterateLogicalExpression<M extends Model>({
         return onLiteral(expression, subQueryBuilder);
       }
 
-      for (const lhs in expression) {
+      for (const lhs in expression as ExpressionObject) {
         const rhs = expression[lhs];
         debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-        if ([OR, AND].includes(lhs)) {
+        if (hasSubExpression(lhs, rhs)) {
           // Wrap nested conditions in their own scope
           subQueryBuilder.where(innerBuilder => {
             for (const subExpression of arrayize(rhs)) {
