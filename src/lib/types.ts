@@ -1,10 +1,13 @@
-import { QueryBuilder, Model } from "objection";
+import {
+  QueryBuilder,
+  Model
+} from 'objection';
 
 // Shared types
 export interface Relation {
   propertyName: string;
   relationName: string;
-  fullyQualifiedProperty: string;
+  fullyQualifiedProperty: string
 }
 
 export type Primitive = number | string | null;
@@ -22,7 +25,7 @@ type OperationHandler<M extends Model> = (
 
 export type Operators<M extends Model> = {
   [f: string]: OperationHandler<M>;
-};
+}
 
 export type AggregationCallback = <M extends Model, K extends typeof Model>(
   RelatedModelClass: K
@@ -43,12 +46,10 @@ export type ExpressionValue = Expression | string | number;
 export type ExpressionObject = {
   [key: string]: ExpressionValue;
 };
-export type Expression =
-  | ExpressionObject
-  | ExpressionObject[]
-  | string
-  | number;
-export type PropertyOmissionPredicate = (propertyName?: string) => boolean;
+export type Expression = ExpressionObject | ExpressionObject[] | string | number;
+export type PropertyOmissionPredicate = (
+  propertyName?: string
+) => boolean;
 
 export type Item = {
   [x: string]: any;
@@ -96,8 +97,8 @@ export interface AggregationConfig {
 
 // Filter definition
 export type EagerExpression = {
-  $where?: Expression;
-  $aggregations?: AggregationConfig[];
-};
+  $where?: Expression,
+  $aggregations?: AggregationConfig[]
+}
 
 export type RequireExpression = Expression;
