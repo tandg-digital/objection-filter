@@ -4,11 +4,11 @@
  * functions which directly touch these operators.
  */
 
-import { debug } from '../config';
-import { iterateLogicalExpression } from './LogicalIterator';
+import { debug } from "../config";
+import { iterateLogicalExpression } from "./LogicalIterator";
 
 // Types
-import { Model, QueryBuilder, PrimitiveValue } from  'objection';
+import { Model, QueryBuilder, PrimitiveValue } from "objection";
 import {
   Relation,
   Operators,
@@ -18,8 +18,8 @@ import {
   LogicalIteratorLiteralFunction,
   Expression,
   ExpressionValue,
-  Primitive
-} from './types';
+  Primitive,
+} from "./types";
 
 /**
  * For a property "a.b.c", slice it into relationName: "a.b", "propertyName": "c" and
@@ -29,21 +29,23 @@ import {
  */
 export function sliceRelation(
   relatedProperty: string,
-  delimiter: string = '.',
+  delimiter: string = ".",
   rootTableName?: string
 ): Relation {
-  const split = relatedProperty.split('.');
+  const split = relatedProperty.split(".");
   const propertyName = split[split.length - 1];
   const relationName = split.slice(0, split.length - 1).join(delimiter);
 
   // Nested relations need to be in the format a:b:c.name
   // https://github.com/Vincit/objection.js/issues/363
   const fullyQualifiedProperty = relationName
-    ? `${relationName.replace(/\./g, ':')}.${propertyName}`
-    : rootTableName ? `${rootTableName}.${propertyName}` : propertyName;
+    ? `${relationName.replace(/\./g, ":")}.${propertyName}`
+    : rootTableName
+    ? `${rootTableName}.${propertyName}`
+    : propertyName;
 
   return { propertyName, relationName, fullyQualifiedProperty };
-};
+}
 
 /**
  * Create operation application utilities with some custom options
@@ -51,41 +53,49 @@ export function sliceRelation(
  * @param {Object} options.operators
  * @param {Function} options.onAggBuild A utility function to filter aggregations per model
  */
-export function Operations<M extends Model>(options: OperationOptions<M>): OperationUtils<M> {
+export function Operations<M extends Model>(
+  options: OperationOptions<M>
+): OperationUtils<M> {
   const defaultOperators: Operators<M> = {
-    $like: (property, operand, builder) => builder
-      .where(property, 'like', operand as string),
-    $lt: (property, operand, builder) => builder
-      .where(property, '<', operand as number),
-    $gt: (property, operand, builder) => builder
-      .where(property, '>', operand as number),
-    $lte: (property, operand, builder) => builder
-      .where(property, '<=', operand as number),
-    $gte: (property, operand, builder) => builder
-      .where(property, '>=', operand as number),
-    $equals: (property, operand, builder) => builder
-      .where(property, operand as PrimitiveValue),
-    '=': (property, operand, builder) => builder
-      .where(property, operand as PrimitiveValue),
-    $in: (property, operand, builder) => builder
-      // @ts-ignore
-      .whereIn(property, operand as ExpressionValue[]),
-    $exists: (property, operand, builder) => (operand
-      ? builder.whereNotNull(property)
-      : builder.whereNull(property)
-    ),
+    $like: (property, operand, builder) =>
+      builder.where(property, "like", operand as string),
+    $lt: (property, operand, builder) =>
+      builder.where(property, "<", operand as number),
+    $gt: (property, operand, builder) =>
+      builder.where(property, ">", operand as number),
+    $lte: (property, operand, builder) =>
+      builder.where(property, "<=", operand as number),
+    $gte: (property, operand, builder) =>
+      builder.where(property, ">=", operand as number),
+    $equals: (property, operand, builder) =>
+      builder.where(property, operand as PrimitiveValue),
+    "=": (property, operand, builder) =>
+      builder.where(property, operand as PrimitiveValue),
+    $in: (property, operand, builder) =>
+      builder
+        // @ts-ignore
+        .whereIn(property, operand as ExpressionValue[]),
+    $exists: (property, operand, builder) =>
+      operand ? builder.whereNotNull(property) : builder.whereNull(property),
     /**
      * @param {String} property
      * @param {Array} items Must be an array of objects/values
      * @param {QueryBuilder} builder
      */
     $or: (property, items, builder) => {
-      const onExit: LogicalIteratorExitFunction<M> = function(operator, value, subQueryBuilder) {
+      const onExit: LogicalIteratorExitFunction<M> = function (
+        operator,
+        value,
+        subQueryBuilder
+      ) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral: LogicalIteratorLiteralFunction<M> = function(value, subQueryBuilder) {
-        onExit('$equals', value, subQueryBuilder);
+      const onLiteral: LogicalIteratorLiteralFunction<M> = function (
+        value,
+        subQueryBuilder
+      ) {
+        onExit("$equals", value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
@@ -94,17 +104,24 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
 
       // Wrap within another builder context to prevent end-of-expression errors
       // TODO: Investigate the consequences of not using this wrapper
-      return builder.where(subQueryBuilder => {
+      return builder.where((subQueryBuilder) => {
         iterateLogical({ $or: items }, subQueryBuilder, true);
       });
     },
     $and: (property, items, builder) => {
-      const onExit: LogicalIteratorExitFunction<M> = function(operator, value, subQueryBuilder) {
+      const onExit: LogicalIteratorExitFunction<M> = function (
+        operator,
+        value,
+        subQueryBuilder
+      ) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral: LogicalIteratorLiteralFunction<M> = function(value, subQueryBuilder) {
-        onExit('$equals', value, subQueryBuilder);
+      const onLiteral: LogicalIteratorLiteralFunction<M> = function (
+        value,
+        subQueryBuilder
+      ) {
+        onExit("$equals", value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
@@ -112,10 +129,10 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
       const iterateLogical = iterateLogicalExpression<M>({ onExit, onLiteral });
 
       // Wrap within another builder context to prevent end-of-expression errors
-      return builder.where(subQueryBuilder => {
+      return builder.where((subQueryBuilder) => {
         iterateLogical({ $and: items }, subQueryBuilder, false);
       });
-    }
+    },
   };
   const { operators, onAggBuild } = options;
 
@@ -124,7 +141,7 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
 
   // TODO: Generalize
   function isPrimitive(expression: ExpressionValue): expression is Primitive {
-    return typeof expression !== 'object';
+    return typeof expression !== "object";
   }
 
   /**
@@ -133,17 +150,20 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
    * @param {Object} expression
    * @param {QueryBuilder} builder
    */
-  const applyPropertyExpression = function(
+  const applyPropertyExpression = function (
     propertyName: string,
     expression: Expression,
     builder: QueryBuilder<M>
   ) {
     debug(
-      `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
+      `Handling property[${propertyName}] expression[${JSON.stringify(
+        expression
+      )}]`
     );
 
     // If the rhs is a primitive, assume equality
-    if (isPrimitive(expression)) return allOperators.$equals(propertyName, expression, builder);
+    if (isPrimitive(expression))
+      return allOperators.$equals(propertyName, expression, builder);
 
     for (const lhs in expression) {
       const operationHandler = allOperators[lhs];
@@ -159,4 +179,4 @@ export function Operations<M extends Model>(options: OperationOptions<M>): Opera
   };
 
   return { applyPropertyExpression, onAggBuild };
-};
+}

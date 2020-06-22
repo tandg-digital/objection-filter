@@ -1,5 +1,5 @@
-import { set, get, keys, map} from 'lodash';
-import { sliceRelation } from './utils';
+import { set, get, keys, map } from "lodash";
+import { sliceRelation } from "./utils";
 
 /**
  * Takes a property name, and a tree of sub-relations and recursively builds
@@ -12,15 +12,15 @@ function toRelationSubExpression(tree: object, relationName?: string): string {
   if (Object.keys(tree).length === 0) return relationName;
 
   // Recursively apply to all attributes
-  const expression = map(tree, toRelationSubExpression).join(',');
+  const expression = map(tree, toRelationSubExpression).join(",");
 
   // The first time this is called, there is no relationName
-  const prefix = relationName ? `${relationName}.` : '';
+  const prefix = relationName ? `${relationName}.` : "";
 
   return keys(tree).length === 1
     ? `${prefix}${expression}`
     : `${prefix}[${expression}]`;
-};
+}
 
 /**
  * Takes an array of fully qualified field names, and concatenates them into a single
@@ -32,18 +32,14 @@ function toRelationSubExpression(tree: object, relationName?: string): string {
 export function createRelationExpression(fields: string[]): string {
   // For each field, set some arbitrarily deep property
   const tree = {};
-  fields.forEach(field => {
+  fields.forEach((field) => {
     const { relationName } = sliceRelation(field);
     if (!relationName) return;
 
     // Set the node of the tree if it doesn't exist yet
-    set(
-      tree,
-      relationName,
-      get(tree, relationName, {})
-    );
+    set(tree, relationName, get(tree, relationName, {}));
   });
 
   // Reduce the property map into a nested expression
   return toRelationSubExpression(tree);
-};
+}
