@@ -4,8 +4,22 @@
  * functions which directly touch these operators.
  */
 
-const { debug } = require('../config');
-const { iterateLogicalExpression } = require('./LogicalIterator');
+import { debug } from '../config';
+import { iterateLogicalExpression } from './LogicalIterator';
+
+// Types
+import { Model, QueryBuilder, PrimitiveValue } from  'objection';
+import {
+  Relation,
+  Operators,
+  OperationOptions,
+  OperationUtils,
+  LogicalIteratorExitFunction,
+  LogicalIteratorLiteralFunction,
+  Expression,
+  ExpressionValue,
+  Primitive
+} from './types';
 
 /**
  * For a property "a.b.c", slice it into relationName: "a.b", "propertyName": "c" and
@@ -13,7 +27,11 @@ const { iterateLogicalExpression } = require('./LogicalIterator');
  * @param {String} relatedProperty A dot notation property "a.b.c"
  * @param {String} delimiter A delimeter to use on the relation e.g. "." or ":"
  */
-const sliceRelation = (relatedProperty, delimiter = '.', rootTableName) => {
+export function sliceRelation(
+  relatedProperty: string,
+  delimiter: string = '.',
+  rootTableName?: string
+): Relation {
   const split = relatedProperty.split('.');
   const propertyName = split[split.length - 1];
   const relationName = split.slice(0, split.length - 1).join(delimiter);
@@ -26,7 +44,6 @@ const sliceRelation = (relatedProperty, delimiter = '.', rootTableName) => {
 
   return { propertyName, relationName, fullyQualifiedProperty };
 };
-module.exports.sliceRelation = sliceRelation;
 
 /**
  * Create operation application utilities with some custom options
@@ -34,24 +51,25 @@ module.exports.sliceRelation = sliceRelation;
  * @param {Object} options.operators
  * @param {Function} options.onAggBuild A utility function to filter aggregations per model
  */
-module.exports.Operations = function(options) {
-  const defaultOperators = {
+export function Operations<M extends Model>(options: OperationOptions<M>): OperationUtils<M> {
+  const defaultOperators: Operators<M> = {
     $like: (property, operand, builder) => builder
-      .where(property, 'like', operand),
+      .where(property, 'like', operand as string),
     $lt: (property, operand, builder) => builder
-      .where(property, '<', operand),
+      .where(property, '<', operand as number),
     $gt: (property, operand, builder) => builder
-      .where(property, '>', operand),
+      .where(property, '>', operand as number),
     $lte: (property, operand, builder) => builder
-      .where(property, '<=', operand),
+      .where(property, '<=', operand as number),
     $gte: (property, operand, builder) => builder
-      .where(property, '>=', operand),
+      .where(property, '>=', operand as number),
     $equals: (property, operand, builder) => builder
-      .where(property, operand),
+      .where(property, operand as PrimitiveValue),
     '=': (property, operand, builder) => builder
-      .where(property, operand),
+      .where(property, operand as PrimitiveValue),
     $in: (property, operand, builder) => builder
-      .where(property, 'in', operand),
+      // @ts-ignore
+      .whereIn(property, operand as ExpressionValue[]),
     $exists: (property, operand, builder) => (operand
       ? builder.whereNotNull(property)
       : builder.whereNull(property)
@@ -62,16 +80,17 @@ module.exports.Operations = function(options) {
      * @param {QueryBuilder} builder
      */
     $or: (property, items, builder) => {
-      const onExit = function(operator, value, subQueryBuilder) {
+      const onExit: LogicalIteratorExitFunction<M> = function(operator, value, subQueryBuilder) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral = function(value, subQueryBuilder) {
+      const onLiteral: LogicalIteratorLiteralFunction<M> = function(value, subQueryBuilder) {
         onExit('$equals', value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+      // @ts-ignore
+      const iterateLogical = iterateLogicalExpression<M>({ onExit, onLiteral });
 
       // Wrap within another builder context to prevent end-of-expression errors
       // TODO: Investigate the consequences of not using this wrapper
@@ -80,16 +99,17 @@ module.exports.Operations = function(options) {
       });
     },
     $and: (property, items, builder) => {
-      const onExit = function(operator, value, subQueryBuilder) {
+      const onExit: LogicalIteratorExitFunction<M> = function(operator, value, subQueryBuilder) {
         const operationHandler = allOperators[operator];
         operationHandler(property, value, subQueryBuilder);
       };
-      const onLiteral = function(value, subQueryBuilder) {
+      const onLiteral: LogicalIteratorLiteralFunction<M> = function(value, subQueryBuilder) {
         onExit('$equals', value, subQueryBuilder);
       };
 
       // Iterate the logical expression until it hits an operation e.g. $gte
-      const iterateLogical = iterateLogicalExpression({ onExit, onLiteral });
+      // @ts-ignore
+      const iterateLogical = iterateLogicalExpression<M>({ onExit, onLiteral });
 
       // Wrap within another builder context to prevent end-of-expression errors
       return builder.where(subQueryBuilder => {
@@ -99,8 +119,13 @@ module.exports.Operations = function(options) {
   };
   const { operators, onAggBuild } = options;
 
-  // Custom operators take override default operators
-  const allOperators = Object.assign({}, defaultOperators, operators);
+  // Custom operators override default operators
+  const allOperators = { ...defaultOperators, ...operators };
+
+  // TODO: Generalize
+  function isPrimitive(expression: ExpressionValue): expression is Primitive {
+    return typeof expression !== 'object';
+  }
 
   /**
    * Apply a subset of operators on a single property
@@ -109,16 +134,16 @@ module.exports.Operations = function(options) {
    * @param {QueryBuilder} builder
    */
   const applyPropertyExpression = function(
-    propertyName,
-    expression,
-    builder
+    propertyName: string,
+    expression: Expression,
+    builder: QueryBuilder<M>
   ) {
     debug(
       `Handling property[${propertyName}] expression[${JSON.stringify(expression)}]`
     );
 
     // If the rhs is a primitive, assume equality
-    if (typeof expression !== 'object') return allOperators.$equals(propertyName, expression, builder);
+    if (isPrimitive(expression)) return allOperators.$equals(propertyName, expression, builder);
 
     for (const lhs in expression) {
       const operationHandler = allOperators[lhs];

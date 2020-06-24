@@ -1,7 +1,5 @@
-const _ = require('lodash');
-const {
-  sliceRelation
-} = require('./utils');
+import { set, get, keys, map} from 'lodash';
+import { sliceRelation } from './utils';
 
 /**
  * Takes a property name, and a tree of sub-relations and recursively builds
@@ -10,16 +8,16 @@ const {
  * @param {Object} tree A tree of relations
  * @param {String} relationName The top level relation
  */
-const toRelationSubExpression = (tree, relationName) => {
+function toRelationSubExpression(tree: object, relationName?: string): string {
   if (Object.keys(tree).length === 0) return relationName;
 
   // Recursively apply to all attributes
-  const expression = _.map(tree, toRelationSubExpression).join(',');
+  const expression = map(tree, toRelationSubExpression).join(',');
 
   // The first time this is called, there is no relationName
   const prefix = relationName ? `${relationName}.` : '';
 
-  return _.keys(tree).length === 1
+  return keys(tree).length === 1
     ? `${prefix}${expression}`
     : `${prefix}[${expression}]`;
 };
@@ -31,7 +29,7 @@ const toRelationSubExpression = (tree, relationName) => {
  * expression = '[schema.[schemaAttributes,organization]]'
  * @param {Array<String>} fields A list of fields
  */
-const createRelationExpression = (fields) => {
+export function createRelationExpression(fields: string[]): string {
   // For each field, set some arbitrarily deep property
   const tree = {};
   fields.forEach(field => {
@@ -39,14 +37,13 @@ const createRelationExpression = (fields) => {
     if (!relationName) return;
 
     // Set the node of the tree if it doesn't exist yet
-    _.set(
+    set(
       tree,
       relationName,
-      _.get(tree, relationName, {})
+      get(tree, relationName, {})
     );
   });
 
   // Reduce the property map into a nested expression
   return toRelationSubExpression(tree);
 };
-module.exports.createRelationExpression = createRelationExpression;

@@ -1,7 +1,23 @@
 const OR = '$or';
 const AND = '$and';
-const _ = require('lodash');
-const { debug } = require('../config');
+import { isArray, toPairs, uniq} from 'lodash';
+import { debug } from '../config';
+
+// Types
+import { Model } from 'objection';
+import {
+  Expression,
+  ExpressionValue,
+  PropertyOmissionPredicate,
+  ExpressionObject,
+  LogicalExpressionIteratorOptions
+} from './types';
+
+// Typescript type predicate check during runtime
+// https://stackoverflow.com/questions/12789231/class-type-check-in-typescript
+function _isArray<T>(objectOrArray: Object | T[]): objectOrArray is T[] {
+  return isArray(objectOrArray);
+}
 
 /**
  * If the input is an object, transform it into an array of key:value pairs
@@ -10,23 +26,33 @@ const { debug } = require('../config');
  * @param {Object|Array} objectOrArray
  * @returns {Array<Object>}
  */
-const arrayize = function(objectOrArray) {
-  if (_.isArray(objectOrArray)) return objectOrArray;
-  return _.toPairs(objectOrArray).map(item => ({ [item[0]]: item[1] }));
+function arrayize<Item>(objectOrArray: Object | Item[]): Item[] {
+  if (_isArray(objectOrArray)) return objectOrArray;
+  const tuples = toPairs(objectOrArray)
+  const objectArray = tuples.map(item => ({ [item[0]]: item[1] }));
+  return objectArray as Item[];
 };
+
+// Helper function to confirm the rhs Expression is an object of SubExpressions
+function hasSubExpression(lhs: string, rhs: ExpressionValue): rhs is ExpressionObject {
+  return [OR, AND].includes(lhs);
+}
 
 /**
  * Given a logical expression return an array of all properties
  * @param {Object} expression
  * @param {Function} test A function to determine whether to include the property
  */
-const getPropertiesFromExpression = function(expression, test = () => true) {
-  let properties = [];
+export function getPropertiesFromExpression(
+  expression: Expression,
+  test: PropertyOmissionPredicate = () => true
+): string[] {
+  let properties: string[] = [];
 
-  for (const lhs in expression) {
+  for (const lhs in expression as ExpressionObject) {
     const rhs = expression[lhs];
 
-    if ([OR, AND].includes(lhs)) {
+    if (hasSubExpression(lhs, rhs)) {
       for (const subExpression of arrayize(rhs)) {
         properties = properties.concat(getPropertiesFromExpression(subExpression, test));
       }
@@ -36,7 +62,7 @@ const getPropertiesFromExpression = function(expression, test = () => true) {
     }
   }
 
-  return _.uniq(properties);
+  return uniq(properties);
 };
 
 /**
@@ -56,10 +82,10 @@ const getPropertiesFromExpression = function(expression, test = () => true) {
  * @param {Function} onExit A function to call once a non-logical operator is hit
  * @param {Function} onLiteral A function to call if the provided input is a primitive
  */
-const iterateLogicalExpression = function({
+export function iterateLogicalExpression<M extends Model>({
   onExit, // onExit(propertyOrOperator, value, builder)
   onLiteral, // onLiteral(value, builder)
-}) {
+}: LogicalExpressionIteratorOptions<M>) {
   /**
    *
    * @param {Object} expression
@@ -67,9 +93,9 @@ const iterateLogicalExpression = function({
    * @param {Boolean} or
    * @param {Function} propertyTransform A preOnExit transform for the property name
    */
-  const iterator = function(
-    expression,
-    builder,
+  const iterator = function<M>(
+    expression: Expression,
+    builder: M,
     or = false,
     propertyTransform = p => p
   ) {
@@ -81,11 +107,11 @@ const iterateLogicalExpression = function({
         return onLiteral(expression, subQueryBuilder);
       }
 
-      for (const lhs in expression) {
+      for (const lhs in expression as ExpressionObject) {
         const rhs = expression[lhs];
         debug(`Handling lhs[${lhs}] rhs[${JSON.stringify(rhs)}]`);
 
-        if ([OR, AND].includes(lhs)) {
+        if (hasSubExpression(lhs, rhs)) {
           // Wrap nested conditions in their own scope
           subQueryBuilder.where(innerBuilder => {
             for (const subExpression of arrayize(rhs)) {
@@ -108,5 +134,3 @@ const iterateLogicalExpression = function({
 
   return iterator;
 };
-
-module.exports = { iterateLogicalExpression, getPropertiesFromExpression };
