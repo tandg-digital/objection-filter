@@ -13,8 +13,7 @@
     "test-target": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec",
     "prepublish": "yarn run build",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "lint:fix": "eslint src/*.js --fix",
-    "lint": "eslint src/*.js"
+    "lint": "eslint src/*.ts"
   },
   "husky": {
     "hooks": {
@@ -22,9 +21,8 @@
     }
   },
   "lint-staged": {
-    "*.(ts|js)": [
-      "yarn run lint:fix",
-      "yarn run lint",
+    "*.ts": [
+      "yarn lint",
       "prettier --write"
     ]
   },
