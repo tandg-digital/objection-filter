@@ -12,7 +12,21 @@
     "test": "cross-env NODE_ENV=test nyc mocha --exit --slow 10 --timeout 5000 --reporter spec test/*.test.js test/**/*.test.js",
     "test-target": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec",
     "prepublish": "yarn run build",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "lint:fix": "eslint src/*.js --fix",
+    "lint": "eslint src/*.js"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.(ts|js)": [
+      "yarn run lint:fix",
+      "yarn run lint",
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -45,12 +59,15 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.13.0",
+    "husky": "^4.2.5",
     "knex": "0.20.15",
+    "lint-staged": "^10.2.11",
     "mocha": "^7.0.1",
     "mysql": "^2.16.0",
     "nyc": "^15.0.0",
     "objection": "^2.1.2",
     "pg": "^7.4.3",
+    "prettier": "^2.0.5",
     "sqlite3": "^4.1.1",
     "typescript": "^3.9.5"
   },
