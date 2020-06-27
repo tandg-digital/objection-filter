@@ -1,5 +1,5 @@
 module.exports = {
   bracketSpacing: true,
   singleQuote: true,
-  trailingComma: false
+  trailingComma: 'none'
 };
