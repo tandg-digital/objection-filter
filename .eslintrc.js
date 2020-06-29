@@ -16,7 +16,6 @@ module.exports = {
       }
     }
   },
-  plugins: [],
   rules: {
     'max-len': 'error',
     'no-underscore-dangle': 'off',

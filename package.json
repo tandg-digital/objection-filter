@@ -13,7 +13,7 @@
     "test-target": "cross-env NODE_ENV=test nyc mocha --slow 10 --timeout 5000 --reporter spec",
     "prepublish": "yarn run build",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "lint": "eslint src/*.ts"
+    "lint": "eslint src"
   },
   "husky": {
     "hooks": {
