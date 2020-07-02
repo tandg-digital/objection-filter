@@ -1,21 +1,26 @@
-const OR = '$or';
-const AND = '$and';
-import { isArray, toPairs, uniq} from 'lodash';
+import { isArray, toPairs, uniq } from 'lodash';
+import { Model } from 'objection';
 import { debug } from '../config';
 
 // Types
-import { Model } from 'objection';
 import {
   Expression,
   ExpressionValue,
   PropertyOmissionPredicate,
   ExpressionObject,
-  LogicalExpressionIteratorOptions
+  LogicalExpressionIteratorOptions,
+  StringFormatter,
+  LogicalIterator
 } from './types';
+
+const OR = '$or';
+const AND = '$and';
 
 // Typescript type predicate check during runtime
 // https://stackoverflow.com/questions/12789231/class-type-check-in-typescript
-function _isArray<T>(objectOrArray: Object | T[]): objectOrArray is T[] {
+function _isArray<T>(
+  objectOrArray: Record<string, unknown> | T[]
+): objectOrArray is T[] {
   return isArray(objectOrArray);
 }
 
@@ -26,15 +31,21 @@ function _isArray<T>(objectOrArray: Object | T[]): objectOrArray is T[] {
  * @param {Object|Array} objectOrArray
  * @returns {Array<Object>}
  */
-function arrayize<Item>(objectOrArray: Object | Item[]): Item[] {
+function arrayize<T extends Expression>(
+  objectOrArray: Record<string, unknown> | T[]
+): T[] {
   if (_isArray(objectOrArray)) return objectOrArray;
-  const tuples = toPairs(objectOrArray)
-  const objectArray = tuples.map(item => ({ [item[0]]: item[1] }));
-  return objectArray as Item[];
-};
+  const tuples = toPairs(objectOrArray);
+  const objectArray = tuples.map((item) => ({ [item[0]]: item[1] }));
+  return objectArray as T[];
+}
 
 // Helper function to confirm the rhs Expression is an object of SubExpressions
-function hasSubExpression(lhs: string, rhs: ExpressionValue): rhs is ExpressionObject {
+function hasSubExpression(
+  lhs: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  rhs: ExpressionValue
+): rhs is ExpressionObject {
   return [OR, AND].includes(lhs);
 }
 
@@ -54,7 +65,9 @@ export function getPropertiesFromExpression(
 
     if (hasSubExpression(lhs, rhs)) {
       for (const subExpression of arrayize(rhs)) {
-        properties = properties.concat(getPropertiesFromExpression(subExpression, test));
+        properties = properties.concat(
+          getPropertiesFromExpression(subExpression, test)
+        );
       }
     } else {
       if (test(lhs)) properties.push(lhs);
@@ -63,7 +76,7 @@ export function getPropertiesFromExpression(
   }
 
   return uniq(properties);
-};
+}
 
 /**
  * Returns a function which iterates an object composed of $or/$and operators
@@ -84,8 +97,8 @@ export function getPropertiesFromExpression(
  */
 export function iterateLogicalExpression<M extends Model>({
   onExit, // onExit(propertyOrOperator, value, builder)
-  onLiteral, // onLiteral(value, builder)
-}: LogicalExpressionIteratorOptions<M>) {
+  onLiteral // onLiteral(value, builder)
+}: LogicalExpressionIteratorOptions<M>): LogicalIterator {
   /**
    *
    * @param {Object} expression
@@ -93,15 +106,15 @@ export function iterateLogicalExpression<M extends Model>({
    * @param {Boolean} or
    * @param {Function} propertyTransform A preOnExit transform for the property name
    */
-  const iterator = function<M>(
+  const iterator = function <M>(
     expression: Expression,
     builder: M,
     or = false,
-    propertyTransform = p => p
+    propertyTransform: StringFormatter = (p) => p
   ) {
     debug('Iterating through', expression);
 
-    builder[or ? 'orWhere' : 'where'](subQueryBuilder => {
+    builder[or ? 'orWhere' : 'where']((subQueryBuilder) => {
       // Assume equality if the target expression is a primitive
       if (typeof expression !== 'object') {
         return onLiteral(expression, subQueryBuilder);
@@ -113,7 +126,7 @@ export function iterateLogicalExpression<M extends Model>({
 
         if (hasSubExpression(lhs, rhs)) {
           // Wrap nested conditions in their own scope
-          subQueryBuilder.where(innerBuilder => {
+          subQueryBuilder.where((innerBuilder) => {
             for (const subExpression of arrayize(rhs)) {
               iterator(
                 subExpression,
@@ -133,4 +146,4 @@ export function iterateLogicalExpression<M extends Model>({
   };
 
   return iterator;
-};
+}
