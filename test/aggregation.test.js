@@ -1,7 +1,7 @@
 const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
-const { buildFilter } = require('../src');
+const { buildFilter } = require('../dist');
 
 const { NUMERIC_SORT } = testUtils;
 

@@ -1,7 +1,7 @@
 require('chai').should();
 const {
   getPropertiesFromExpression
-} = require('../LogicalIterator');
+} = require('../../dist/lib/LogicalIterator');
 
 describe('LogicalIterator', function () {
   describe('getPropertiesFromExpression with default test', () => {
