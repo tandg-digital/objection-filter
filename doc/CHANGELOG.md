@@ -2,8 +2,9 @@
 
 ### 4.0.0
 
-I've made this a major version bump due to the Typescript update, and the inclusion of typings. There are  no new features additions though, so no need for migration.
+I've made this a major version bump due to the Typescript update, and the removal of Node version 8 support. There are no new features additions though, so no need for migration.
 
+- Remove support for Node.js 8.x.x (only supports v10 and v12 at the moment)
 - Refactor main codebase to [Typescript](https://www.typescriptlang.org/)
 - Implement precommit hooks for eslint and [prettier](https://github.com/prettier/prettier)
 - Updated some dev dependencies
