@@ -53,6 +53,7 @@ module.exports.Operations = function(options) {
     $equals: (property, operand, builder) => builder.where(property, operand),
     '=': (property, operand, builder) => builder.where(property, operand),
     $in: (property, operand, builder) => builder.where(property, 'in', operand),
+    $nin: (property, operand, builder) => builder.whereNotIn(property, operand),
     $exists: (property, operand, builder) =>
       operand ? builder.whereNotNull(property) : builder.whereNull(property),
     $containAll: (property, operand, builder) =>

@@ -77,6 +77,9 @@ module.exports.Operations = function (options) {
     $in: function $in(property, operand, builder) {
       return builder.where(property, 'in', operand);
     },
+    $nin: function $nin(property, operand, builder) {
+      return builder.whereNotIn(property, operand);
+    },
     $exists: function $exists(property, operand, builder) {
       return operand ? builder.whereNotNull(property) : builder.whereNull(property);
     },
