@@ -3,6 +3,7 @@ import _FilterQueryBuilder from './lib/FilterQueryBuilder';
 import { sliceRelation as _sliceRelation } from './lib/utils';
 import { createRelationExpression as _createRelationExpression } from './lib/ExpressionBuilder';
 import { BaseModel, FilterQueryBuilderOptions } from './lib/types';
+import { getPropertiesFromExpression as _getPropertiesFromExpression } from './lib/LogicalIterator';
 
 export function buildFilter<M extends BaseModel, K extends typeof Model>(
   modelClass: K,
@@ -14,3 +15,4 @@ export function buildFilter<M extends BaseModel, K extends typeof Model>(
 export const FilterQueryBuilder = _FilterQueryBuilder;
 export const sliceRelation = _sliceRelation;
 export const createRelationExpression = _createRelationExpression;
+export const getPropertiesFromExpression = _getPropertiesFromExpression;
