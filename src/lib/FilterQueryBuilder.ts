@@ -22,7 +22,8 @@ import {
   ModelClass,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Model as ObjModel,
-  OrderByDirection
+  OrderByDirection,
+  Relation
 } from 'objection';
 import * as _ from 'lodash';
 import { debug } from '../config';
@@ -389,6 +390,34 @@ const isRelatedProperty = function (name) {
 };
 
 /**
+ * Test all relations on a set of properties for a particular condition
+ */
+function testAllRelations<M extends BaseModel>(
+  properties: string[],
+  Model: ModelClass<M>,
+  predicate: (relation: Relation) => boolean
+) {
+  let testResult = true;
+  for (const field of properties) {
+    const { relationName } = sliceRelation(field);
+    if (!relationName) continue;
+
+    let rootModel: typeof ObjModel | ModelClass<M> = Model;
+    for (const relatedModelName of relationName.split('.')) {
+      const relation = rootModel.getRelation(relatedModelName);
+      if (!predicate(relation)) {
+        testResult = false;
+        break;
+      }
+
+      rootModel = relation.relatedModelClass;
+    }
+  }
+
+  return testResult;
+}
+
+/**
  * Apply an entire require expression to the query builder
  * e.g. { "prop1": { "$like": "A" }, "prop2": { "$in": [1] } }
  * Do a first pass on the fields to create an objectionjs RelationExpression
@@ -430,22 +459,37 @@ export function applyRequire<M extends BaseModel>(
   const relatedPropertiesSet = propertiesSet.filter(isRelatedProperty);
   if (relatedPropertiesSet.length === 0) {
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
-  } else {
-    const filterQuery = Model.query().distinct(...fullIdColumns);
-
-    applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
-
-    // If there were related properties, join onto the filter
-    const joinRelation = createRelationExpression(propertiesSet);
-    filterQuery.joinRelation(joinRelation);
-
-    const filterQueryAlias = 'filter_query';
-    builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
-      fullIdColumns.forEach((fullIdColumn, index) => {
-        this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
-      });
-    });
+    return builder;
   }
+
+  // If only joining belongsTo relationships, create a simpler query
+  const isOnlyJoiningToBelongsTo = testAllRelations(
+    propertiesSet,
+    Model,
+    (relation) => relation instanceof Model.BelongsToOneRelation
+  );
+  if (isOnlyJoiningToBelongsTo) {
+    // If there are only belongsTo relations, then filter on the main query
+    applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
+    const joinRelation = createRelationExpression(propertiesSet);
+    builder.joinRelated(joinRelation);
+    return builder;
+  }
+
+  // If there are a hasMany or manyToMany relations, then create a separate filter query
+  const filterQuery = Model.query().distinct(...fullIdColumns);
+  applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
+
+  // If there were related properties, join onto the filter
+  const joinRelation = createRelationExpression(propertiesSet);
+  filterQuery.joinRelated(joinRelation);
+
+  const filterQueryAlias = 'filter_query';
+  builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
+    fullIdColumns.forEach((fullIdColumn, index) => {
+      this.on(fullIdColumn, '=', `${filterQueryAlias}.${idColumns[index]}`);
+    });
+  });
 
   return builder;
 }

@@ -8,11 +8,12 @@ const { STRING_SORT } = testUtils;
 describe('complex filters', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
-      let session, Person;
+      let session, Person, Animal;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
         Person = session.models.Person;
+        Animal = session.models.Animal;
       });
 
       before(function () {
@@ -354,6 +355,68 @@ describe('complex filters', function () {
           person.pets[0].name.should.equal('P90');
         });
       });
+
+      describe('optimization', function () {
+        context('given require filter is purely belongsTo', () => {
+          it('should return base model results', async () => {
+            const result = await buildFilter(Animal)
+              .build({
+                require: {
+                  'owner.firstName': 'F00'
+                },
+                eager: 'owner'
+              });
+            result.length.should.equal(10);
+            result.map(animal => animal.owner.firstName.should.equal('F00'));
+          });
+        });
+
+        context('given require filter is not purely belongsTo', () => {
+          it('should return base model results', async () => {
+            const result = await buildFilter(Person)
+              .build({
+                require: {
+                  'pets.name': 'P00'
+                }
+              });
+            result.length.should.equal(1);
+            const person = result[0];
+            person.firstName.should.equal('F00');
+          });
+        });
+
+        context('given eager filter is purely belongsTo', () => {
+          it('should return base model results', async () => {
+            const result = await buildFilter(Animal)
+              .build({
+                eager: {
+                  $where: {
+                    'owner.firstName': 'F00'
+                  },
+                  owner: true
+                }
+              });
+            result.length.should.equal(10);
+            result.map(animal => animal.owner.firstName.should.equal('F00'));
+          });
+        });
+
+        context('given eager filter is not purely belongsTo', () => {
+          it('should return base model results', async () => {
+            const result = await buildFilter(Person)
+              .build({
+                eager: {
+                  $where: {
+                    'pets.name': 'P00'
+                  }
+                }
+              });
+            result.length.should.equal(1);
+            const person = result[0];
+            person.firstName.should.equal('F00');
+          });
+        });
+      })
     });
   });
 });
