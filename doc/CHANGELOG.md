@@ -1,5 +1,13 @@
 # Changelog
 
+### 4.1.0
+
+- Optimized the sql query so that when only joining onto belongsTo relations, it doesn't create a separate filter query. This significantly improves performance in some specific use cases.
+
+### 4.0.1
+
+- Exported the `getPropertiesFromExpression` function on the main interface
+
 ### 4.0.0
 
 I've made this a major version bump due to the Typescript update, and the removal of Node version 8 support. There are no new features additions though, so no need for migration.
