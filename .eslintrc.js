@@ -42,7 +42,8 @@ module.exports = {
     'prefer-destructuring': 'off',
     'prefer-object-spread': 'off',
     'import/extensions': 'off',
-    'import/prefer-default-export': 'off'
+    'import/prefer-default-export': 'off',
+    'max-classes-per-file': 'off'
   },
   env: {
     node: true,
