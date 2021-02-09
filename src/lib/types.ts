@@ -1,4 +1,4 @@
-import { QueryBuilder, Model } from 'objection';
+import { QueryBuilder, Model, ReferenceBuilder } from 'objection';
 
 // Shared types
 export interface Relation {
@@ -14,8 +14,8 @@ export interface BaseModel extends Model {
 }
 
 // OperationOptions types and subtypes
-type OperationHandler<M extends Model> = (
-  property: string,
+export type OperationHandler<M extends Model> = (
+  property: string | ReferenceBuilder,
   operand: Expression | ExpressionValue,
   builder: QueryBuilder<M>
 ) => QueryBuilder<M>;
