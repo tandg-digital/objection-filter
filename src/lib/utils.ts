@@ -38,14 +38,18 @@ import {
 export function sliceRelation(
   relatedProperty: string,
   delimiter = '.',
-  rootTableName?: string
+  rootTableName?: string,
+  fieldExpressionDelimiter = '$'
 ): Relation {
   let jsonProperty;
-  [relatedProperty, jsonProperty] = relatedProperty.split(':');
+  [relatedProperty, jsonProperty] = relatedProperty.split(
+    fieldExpressionDelimiter
+  );
 
   const split = relatedProperty.split('.');
   let propertyName = split[split.length - 1];
-  if (jsonProperty) propertyName += `:${jsonProperty}`;
+  if (jsonProperty)
+    propertyName += `${fieldExpressionDelimiter}${jsonProperty}`;
   const relationName = split.slice(0, split.length - 1).join(delimiter);
 
   // Nested relations need to be in the format a:b:c.name
@@ -158,7 +162,7 @@ export function Operations<M extends Model>(
    * Returns the operationHandler by name. Builds a reference to the property if necessary.
    * @param operator name of the operator
    */
-  function getOperationHandler(operator: string): OperationHandler<M> {
+  function getOperationHandler(operator: any): OperationHandler<M> {
     const operationHandler = allOperators[operator];
     if (!operationHandler) return null;
 
@@ -167,12 +171,13 @@ export function Operations<M extends Model>(
     }
 
     return (property, operand, builder) => {
-      let propertyRef: string | ReferenceBuilder = property;
       if (typeof property === 'string' && isFieldExpression(property)) {
-        propertyRef = ref(property);
+        let propertyRef = getFieldExpressionRef(property);
         propertyRef = castTo(propertyRef, operand);
+        return operationHandler(propertyRef, operand, builder);
       }
-      return operationHandler(propertyRef, operand, builder);
+
+      return operationHandler(property, operand, builder);
     };
   }
 
@@ -215,10 +220,27 @@ export function Operations<M extends Model>(
 
 /**
  * Determines if a property is a [FieldExpression](https://vincit.github.io/objection.js/api/types/#type-fieldexpression)
- * @param propertyName The property to check
+ * @param property The property to check
  */
-export function isFieldExpression(propertyName: string): boolean {
-  return propertyName.indexOf(':') > -1;
+export function isFieldExpression(property: string): boolean {
+  return property.indexOf('$') > -1;
+}
+
+/**
+ * Builds a reference for a FieldExpression with support for fully-qualified properties
+ * @param property a FieldExpression string
+ */
+export function getFieldExpressionRef(property: string): ReferenceBuilder {
+  const isFullyQualified = property.indexOf(':') > -1;
+  if (isFullyQualified) {
+    let { propertyName, relationName } = sliceRelation(property, ':');
+    relationName = relationName.replace('.', ':');
+    propertyName = propertyName.replace('$', ':');
+    return (ref(propertyName) as any).from(relationName);
+  }
+
+  const propertyName = property.replace('$', ':');
+  return ref(propertyName);
 }
 
 /**

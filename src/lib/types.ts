@@ -55,7 +55,7 @@ export type Item = {
 };
 
 export type LogicalIteratorExitFunction<M extends Model> = (
-  operator: string,
+  operator: string | ReferenceBuilder,
   value: Primitive,
   subQueryBuilder: QueryBuilder<M>
 ) => void;

@@ -33,7 +33,7 @@ describe('JSONB attributes', function () {
             .build({
               eager: {
                 $where: {
-                  'metadata:stringField': 'M99' 
+                  'metadata$stringField': 'M99' 
                 }
               }
             });
@@ -45,7 +45,7 @@ describe('JSONB attributes', function () {
             .build({
               eager: {
                 $where: {
-                  'metadata:numberField': 1 
+                  'metadata$numberField': 1 
                 }
               }
             });
@@ -57,7 +57,7 @@ describe('JSONB attributes', function () {
             .build({
               eager: {
                 $where: {
-                  'metadata:stringField': {
+                  'metadata$stringField': {
                     $or: [
                       {'$equals': 'M99'}, 
                       {'$equals': 'M98'}
@@ -74,7 +74,7 @@ describe('JSONB attributes', function () {
             .build({
               eager: {
                 $where: {
-                  'metadata:numberField': {
+                  'metadata$numberField': {
                     $and: [
                       {'$gte': 2}, 
                       {'$lt': 4}
