@@ -179,12 +179,15 @@ module.exports = {
             seq: Math.floor(Math.random() * 20)
           };
           if(session.config.client === 'postgres'){
+            const booleanField = movie.categoryId % 2 === 0;
             movie.metadata = {
               stringField: movie.name,
               numberField: movie.categoryId,
+              booleanField,
               objectField: {
                 stringField: movie.name,
-                numberField: movie.categoryId
+                numberField: movie.categoryId,
+                booleanField
               },
               nullField: null
             }

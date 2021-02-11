@@ -52,7 +52,7 @@ describe('JSONB attributes', function () {
           result.should.be.an.an('array');
           result.should.have.length(10);
         });
-        it('should work with $or', async () => {
+        it('should work with logical operators', async () => {
           const result = await buildFilter(Movie)
             .build({
               eager: {
@@ -85,6 +85,60 @@ describe('JSONB attributes', function () {
             })
           result.should.be.an.an('array');
           result.should.have.length(20);
+        });
+        it('should work nested object properties', async () => {
+          const result = await buildFilter(Movie)
+            .build({
+              eager: {
+                $where: {
+                  'metadata$objectField.numberField': 1
+                }
+              }
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(10);
+        });
+        it('should support boolean types', async () => {
+          const result = await buildFilter(Movie)
+            .build({
+              where: {
+                'metadata$booleanField': false
+              }
+            });
+          result.length.should.be.greaterThan(0);
+          for(const row of result){
+            row.metadata.booleanField.should.equal(false);
+          }
+        })
+        it('should support require and eager with relations', async () =>{
+          const result = await buildFilter(Person)
+            .build({
+              eager: 'pets',
+              require: {
+                'movies.metadata$stringField': 'M99' 
+              },
+              where: {
+                'pets.name': 'P00'
+              }
+            });
+
+          result.length.should.equal(1);
+          const person = result[0];
+          person.firstName.should.equal('F00');
+          person.pets.should.be.an('array');
+          person.pets.length.should.equal(1);
+          person.pets[0].name.should.equal('P00');
+        })
+        it('should eager joins with fullyQualifiedProperties', async () => {
+          const result = await buildFilter(Person)
+            .build({
+              eager: 'movies',
+              require: {
+                'parent.movies.metadata$stringField': 'M99' 
+              }
+            });
+          result.length.should.equal(1);
+          result[0].firstName.should.equal('F01');
         });
       });
     });

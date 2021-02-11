@@ -262,18 +262,7 @@ export function castTo(
   if (type === 'number') {
     return reference.castDecimal();
   }
-  if (type === 'bigint') {
-    return reference.castBigInt();
-  }
-  if (type === 'object') {
-    if (_.isArray(operand)) {
-      // For array comparisons, get the type of the first element
-      return castTo(reference, operand[0]);
-    }
-    // For non-array objects, don't cast
-    return reference;
-  }
 
-  // cast to text by default
-  return reference.castText();
+  // Don't cast by default
+  return reference;
 }
