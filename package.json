@@ -1,11 +1,11 @@
 {
   "name": "objection-filter",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "A filter module for objection.js",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "engines": {
-    "node": ">=10.0.0 <=12.x.x"
+    "node": ">=10.0.0 <= 14.x.x"
   },
   "scripts": {
     "build": "tsc",
