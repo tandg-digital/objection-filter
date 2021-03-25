@@ -463,13 +463,18 @@ export function applyRequire<M extends BaseModel>(
   }
 
   // If only joining belongsTo relationships, create a simpler query
-  const isOnlyJoiningToBelongsTo = testAllRelations(
+  const isOnlyJoiningToBelongsTo: boolean = testAllRelations(
     propertiesSet,
     Model,
-    (relation) => relation instanceof Model.BelongsToOneRelation
+    (relation: unknown) => {
+      return (
+        relation instanceof Model.BelongsToOneRelation ||
+        relation instanceof Model.HasOneRelation
+      );
+    }
   );
   if (isOnlyJoiningToBelongsTo) {
-    // If there are only belongsTo relations, then filter on the main query
+    // If there are only belongsTo or hasOne relations, then filter on the main query
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
     const joinRelation = createRelationExpression(propertiesSet);
     builder.joinRelated(joinRelation);
