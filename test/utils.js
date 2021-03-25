@@ -17,31 +17,11 @@ module.exports = {
       filename: path.join(os.tmpdir(), 'objection_find_test.db')
     },
     useNullAsDefault: true
-  }, {
-    client: 'postgres',
-    connection: {
-      host: '127.0.0.1',
-      database: 'objection_filter_test'
-    },
-    pool: {
-      min: 0,
-      max: 10
-    }
-  }, {
-    client: 'mysql',
-    connection: {
-      host: '127.0.0.1',
-      user: 'travis',
-      database: 'objection_filter_test'
-    },
-    pool: {
-      min: 0,
-      max: 10
-    }
   }],
 
   NUMERIC_SORT: (a, b) => a - b,
   STRING_SORT: (a, b) => getNumber(a) - getNumber(b),
+  FORMAT_SQL: (sql) => sql.replace('`', '"'),
 
   initialize: function (knexConfig) {
     const knex = Knex(knexConfig);
