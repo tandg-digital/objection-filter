@@ -378,8 +378,8 @@ describe('complex filters', function () {
 
           it('should generate SQL without filter inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
-            sql.should.equal(
-              FORMAT_SQL('select `Animal`.* from `Animal` inner join `Person` as `owner` on `owner`.`id` = `Animal`.`ownerId` where (`owner`.`firstName` = ?)')
+            FORMAT_SQL(sql).should.equal(
+              'select `Animal`.* from `Animal` inner join `Person` as `owner` on `owner`.`id` = `Animal`.`ownerId` where (`owner`.`firstName` = ?)'
             );
           });
         });
@@ -449,8 +449,8 @@ describe('complex filters', function () {
 
           it('should generate SQL without filter inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
-            sql.should.equal(
-              FORMAT_SQL('select `Person`.* from `Person` inner join `Person` as `parent` on `parent`.`id` = `Person`.`pid` where (`parent`.`firstName` = ?)')
+            FORMAT_SQL(sql).should.equal(
+              'select `Person`.* from `Person` inner join `Person` as `parent` on `parent`.`id` = `Person`.`pid` where (`parent`.`firstName` = ?)'
             );
           });
         });
@@ -473,8 +473,8 @@ describe('complex filters', function () {
 
           it('should generate SQL without filter inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
-            sql.should.equal(
-              FORMAT_SQL('select `Movie`.* from `Movie` inner join `Movie_Version` as `version` on `version`.`movieId` = `Movie`.`id` where (`version`.`version` = ?)')
+            FORMAT_SQL(sql).should.equal(
+              'select `Movie`.* from `Movie` inner join `Movie_Version` as `version` on `version`.`movieId` = `Movie`.`id` where (`version`.`version` = ?)'
             );
           });
         });
