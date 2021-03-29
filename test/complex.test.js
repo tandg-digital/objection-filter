@@ -3,17 +3,18 @@ require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
 
-const { STRING_SORT } = testUtils;
+const { STRING_SORT, FORMAT_SQL } = testUtils;
 
 describe('complex filters', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     describe(knexConfig.client, function() {
-      let session, Person, Animal;
+      let session, Person, Animal, Movie;
 
       before(function () {
         session = testUtils.initialize(knexConfig);
         Person = session.models.Person;
         Animal = session.models.Animal;
+        Movie = session.models.Movie;
       });
 
       before(function () {
@@ -358,16 +359,28 @@ describe('complex filters', function () {
 
       describe('optimization', function () {
         context('given require filter is purely belongsTo', () => {
-          it('should return base model results', async () => {
-            const result = await buildFilter(Animal)
+          let query;
+          beforeEach(() => {
+            query = buildFilter(Animal)
               .build({
                 require: {
                   'owner.firstName': 'F00'
                 },
                 eager: 'owner'
               });
+          });
+
+          it('should return base model results', async () => {
+            const result = await query;
             result.length.should.equal(10);
             result.map(animal => animal.owner.firstName.should.equal('F00'));
+          });
+
+          it('should generate SQL without filter inner join', () => {
+            const { sql } = query.toKnexQuery().toSQL();
+            FORMAT_SQL(sql).should.equal(
+              'select `Animal`.* from `Animal` inner join `Person` as `owner` on `owner`.`id` = `Animal`.`ownerId` where (`owner`.`firstName` = ?)'
+            );
           });
         });
 
@@ -414,6 +427,55 @@ describe('complex filters', function () {
             result.length.should.equal(1);
             const person = result[0];
             person.firstName.should.equal('F00');
+          });
+        });
+
+        context('given require filter is purely belongsToOne', () => {
+          let query;
+          beforeEach(() => {
+            query = buildFilter(Person)
+            .build({
+              require: {
+                'parent.firstName': 'F01'
+              }
+            });
+          });
+
+          it('should return base model results', async () => {
+            const result = await query;
+            result.length.should.equal(1);
+            result[0].firstName.should.equal('F02');
+          });
+
+          it('should generate SQL without filter inner join', () => {
+            const { sql } = query.toKnexQuery().toSQL();
+            FORMAT_SQL(sql).should.equal(
+              'select `Person`.* from `Person` inner join `Person` as `parent` on `parent`.`id` = `Person`.`pid` where (`parent`.`firstName` = ?)'
+            );
+          });
+        });
+
+        context('given require filter is purely hasOne', () => {
+          let query;
+          beforeEach(() => {
+            query = buildFilter(Movie)
+            .build({
+              require: {
+                'version.version': 1
+              }
+            });
+          });
+
+          it('should return base model results', async () => {
+            const result = await query;
+            result.length.should.equal(100);
+          });
+
+          it('should generate SQL without filter inner join', () => {
+            const { sql } = query.toKnexQuery().toSQL();
+            FORMAT_SQL(sql).should.equal(
+              'select `Movie`.* from `Movie` inner join `Movie_Version` as `version` on `version`.`movieId` = `Movie`.`id` where (`version`.`version` = ?)'
+            );
           });
         });
       })
