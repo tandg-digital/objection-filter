@@ -3,10 +3,17 @@
  * filter execution. It stores all default operators, custom operators and
  * functions which directly touch these operators.
  */
-import { Model, QueryBuilder, PrimitiveValue } from 'objection';
+import {
+  Model,
+  QueryBuilder,
+  PrimitiveValue,
+  ref,
+  ReferenceBuilder
+} from 'objection';
+import * as _ from 'lodash';
 
 import { debug } from '../config';
-import { iterateLogicalExpression } from './LogicalIterator';
+import { iterateLogicalExpression, hasSubExpression } from './LogicalIterator';
 
 // Types
 import {
@@ -18,7 +25,8 @@ import {
   LogicalIteratorLiteralFunction,
   Expression,
   ExpressionValue,
-  Primitive
+  Primitive,
+  OperationHandler
 } from './types';
 
 /**
@@ -30,10 +38,18 @@ import {
 export function sliceRelation(
   relatedProperty: string,
   delimiter = '.',
-  rootTableName?: string
+  rootTableName?: string,
+  fieldExpressionDelimiter = '$'
 ): Relation {
+  let jsonProperty;
+  [relatedProperty, jsonProperty] = relatedProperty.split(
+    fieldExpressionDelimiter
+  );
+
   const split = relatedProperty.split('.');
-  const propertyName = split[split.length - 1];
+  let propertyName = split[split.length - 1];
+  if (jsonProperty)
+    propertyName += `${fieldExpressionDelimiter}${jsonProperty}`;
   const relationName = split.slice(0, split.length - 1).join(delimiter);
 
   // Nested relations need to be in the format a:b:c.name
@@ -88,7 +104,7 @@ export function Operations<M extends Model>(
         value,
         subQueryBuilder
       ) {
-        const operationHandler = allOperators[operator];
+        const operationHandler = getOperationHandler(operator);
         operationHandler(property, value, subQueryBuilder);
       };
       const onLiteral: LogicalIteratorLiteralFunction<M> = function (
@@ -113,7 +129,7 @@ export function Operations<M extends Model>(
         value,
         subQueryBuilder
       ) {
-        const operationHandler = allOperators[operator];
+        const operationHandler = getOperationHandler(operator);
         operationHandler(property, value, subQueryBuilder);
       };
       const onLiteral: LogicalIteratorLiteralFunction<M> = function (
@@ -143,6 +159,29 @@ export function Operations<M extends Model>(
   }
 
   /**
+   * Returns the operationHandler by name. Builds a reference to the property if necessary.
+   * @param operator name of the operator
+   */
+  function getOperationHandler(operator: any): OperationHandler<M> {
+    const operationHandler = allOperators[operator];
+    if (!operationHandler) return null;
+
+    if (hasSubExpression(operator)) {
+      return operationHandler;
+    }
+
+    return (property, operand, builder) => {
+      if (typeof property === 'string' && isFieldExpression(property)) {
+        let propertyRef = getFieldExpressionRef(property);
+        propertyRef = castTo(propertyRef, operand);
+        return operationHandler(propertyRef, operand, builder);
+      }
+
+      return operationHandler(property, operand, builder);
+    };
+  }
+
+  /**
    * Apply a subset of operators on a single property
    * @param {String} propertyName
    * @param {Object} expression
@@ -161,11 +200,11 @@ export function Operations<M extends Model>(
 
     // If the rhs is a primitive, assume equality
     if (isPrimitive(expression))
-      return allOperators.$equals(propertyName, expression, builder);
+      return getOperationHandler('$equals')(propertyName, expression, builder);
 
     for (const lhs in expression) {
-      const operationHandler = allOperators[lhs];
       const rhs = expression[lhs];
+      const operationHandler = getOperationHandler(lhs);
 
       if (!operationHandler) {
         debug(`The operator [${lhs}] does not exist, skipping`);
@@ -177,4 +216,53 @@ export function Operations<M extends Model>(
   };
 
   return { applyPropertyExpression, onAggBuild };
+}
+
+/**
+ * Determines if a property is a [FieldExpression](https://vincit.github.io/objection.js/api/types/#type-fieldexpression)
+ * @param property The property to check
+ */
+export function isFieldExpression(property: string): boolean {
+  return property.indexOf('$') > -1;
+}
+
+/**
+ * Builds a reference for a FieldExpression with support for fully-qualified properties
+ * @param property a FieldExpression string
+ */
+export function getFieldExpressionRef(property: string): ReferenceBuilder {
+  const isFullyQualified = property.indexOf(':') > -1;
+  if (isFullyQualified) {
+    let { propertyName, relationName } = sliceRelation(property, ':');
+    relationName = relationName.replace('.', ':');
+    propertyName = propertyName.replace('$', ':');
+    return (ref(propertyName) as any).from(relationName);
+  }
+
+  const propertyName = property.replace('$', ':');
+  return ref(propertyName);
+}
+
+/**
+ * Casts a ReferenceBuilder instance to a type based on the type of the operand
+ * @param reference A reference built from a filterExpression
+ * @param operand the operand from which to infer the type
+ */
+export function castTo(
+  reference: ReferenceBuilder,
+  operand: Expression
+): ReferenceBuilder {
+  const type = typeof operand;
+  if (type === 'string') {
+    return reference.castText();
+  }
+  if (type === 'boolean') {
+    return reference.castBool();
+  }
+  if (type === 'number') {
+    return reference.castDecimal();
+  }
+
+  // Don't cast by default
+  return reference;
 }
