@@ -1,5 +1,5 @@
 import { isArray, toPairs, uniq } from 'lodash';
-import { Model } from 'objection';
+import { Model, QueryBuilder } from 'objection';
 import { debug } from '../config';
 
 // Types
@@ -106,9 +106,9 @@ export function iterateLogicalExpression<M extends Model>({
    * @param {Boolean} or
    * @param {Function} propertyTransform A preOnExit transform for the property name
    */
-  const iterator = function <M>(
+  const iterator = function (
     expression: Expression,
-    builder: M,
+    builder: QueryBuilder<M>,
     or = false,
     propertyTransform: StringFormatter = (p) => p
   ) {
@@ -145,5 +145,5 @@ export function iterateLogicalExpression<M extends Model>({
     });
   };
 
-  return iterator;
+  return iterator as LogicalIterator;
 }
