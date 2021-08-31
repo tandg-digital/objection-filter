@@ -105,6 +105,18 @@ describe('JSONB attributes', function () {
           result.should.be.an.an('array');
           result.should.have.length(10);
         });
+        it('should support array indexing', async () => {
+			const result = await buildFilter(Movie)
+			  .build({
+				eager: {
+				  $where: {
+					'metadata$arrayField[0]': 1
+				  }
+				}
+			  });
+			result.should.be.an.an('array');
+			result.should.have.length(50);
+		});
         it('should support boolean types', async () => {
           const result = await buildFilter(Movie)
             .build({
@@ -181,6 +193,15 @@ describe('JSONB attributes', function () {
             });
 			result.should.be.an.an('array');
 			const resultVals = result.map(movie => movie.metadata.objectField.numberField);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by a array index value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$arrayField[0] asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.arrayField[0]);
 			expect(isSorted(resultVals)).to.be.true;
 		})
 		it('should order by property value descending', async () => {
