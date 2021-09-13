@@ -1,7 +1,14 @@
 const _ = require('lodash');
 require('chai').should();
+
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
+const { expect } = require('chai');
+
+const isSorted = (array, isDescending = false) => {
+	const sortedVals = _.cloneDeep(array).sort((a, b) => isDescending ? b - a : a - b);
+	return _.isEqual(array, sortedVals)
+}
 describe('JSONB attributes', function () {
   _.each(testUtils.testDatabaseConfigs, function (knexConfig) {
     if(knexConfig.client !== 'postgres') return;
@@ -98,6 +105,18 @@ describe('JSONB attributes', function () {
           result.should.be.an.an('array');
           result.should.have.length(10);
         });
+        it('should support array indexing', async () => {
+			const result = await buildFilter(Movie)
+			  .build({
+				eager: {
+				  $where: {
+					'metadata$arrayField[0]': 1
+				  }
+				}
+			  });
+			result.should.be.an.an('array');
+			result.should.have.length(50);
+		});
         it('should support boolean types', async () => {
           const result = await buildFilter(Movie)
             .build({
@@ -140,6 +159,60 @@ describe('JSONB attributes', function () {
           result.length.should.equal(1);
           result[0].firstName.should.equal('F01');
         });
+		it('should order by a string property value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$stringField asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.stringField);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by a number property value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$numberField asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.numberField);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by a boolean property value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$booleanField asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.booleanField);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by a nested property value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$objectField.numberField asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.objectField.numberField);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by a array index value', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$arrayField[0] asc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.arrayField[0]);
+			expect(isSorted(resultVals)).to.be.true;
+		})
+		it('should order by property value descending', async () => {
+			const result = await buildFilter(Movie)
+            .build({
+				order: 'metadata$numberField desc'
+            });
+			result.should.be.an.an('array');
+			const resultVals = result.map(movie => movie.metadata.numberField);
+			expect(isSorted(resultVals, true)).to.be.true;
+		})
       });
     });
   });
