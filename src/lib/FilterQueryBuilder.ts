@@ -27,7 +27,12 @@ import {
 } from 'objection';
 import * as _ from 'lodash';
 import { debug } from '../config';
-import { sliceRelation, Operations } from './utils';
+import {
+  sliceRelation,
+  Operations,
+  isFieldExpression,
+  getFieldExpressionRef
+} from './utils';
 import { createRelationExpression } from './ExpressionBuilder';
 import {
   iterateLogicalExpression,
@@ -564,10 +569,23 @@ export function applyOrder<M extends BaseModel>(
       .split(' ') as [string, OrderByDirection];
     const { propertyName, relationName } = sliceRelation(orderProperty);
 
+    // Use fieldExpressionRef to sort if necessary
+    const orderBy = (
+      queryBuilder: QueryBuilder<ObjModel, ObjModel[]>,
+      fullyQualifiedColumn: string
+    ) => {
+      if (isFieldExpression(fullyQualifiedColumn)) {
+        const ref = getFieldExpressionRef(fullyQualifiedColumn);
+        queryBuilder.orderBy(ref, direction);
+      } else {
+        queryBuilder.orderBy(fullyQualifiedColumn, direction);
+      }
+    };
+
     if (!relationName) {
       // Root level where should include the root table name
       const fullyQualifiedColumn = `${Model.tableName}.${propertyName}`;
-      return builder.orderBy(fullyQualifiedColumn, direction);
+      return orderBy(builder, fullyQualifiedColumn);
     }
 
     // For now, only allow sub-query ordering of eager expressions
@@ -575,7 +593,7 @@ export function applyOrder<M extends BaseModel>(
       const fullyQualifiedColumn = `${
         eagerBuilder.modelClass().tableName
       }.${propertyName}`;
-      eagerBuilder.orderBy(fullyQualifiedColumn, direction);
+      orderBy(eagerBuilder, fullyQualifiedColumn);
     });
   });
 

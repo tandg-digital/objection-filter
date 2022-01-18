@@ -41,10 +41,10 @@ function arrayize<T extends Expression>(
 }
 
 // Helper function to confirm the rhs Expression is an object of SubExpressions
-function hasSubExpression(
+export function hasSubExpression(
   lhs: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  rhs: ExpressionValue
+  rhs?: ExpressionValue
 ): rhs is ExpressionObject {
   return [OR, AND].includes(lhs);
 }
