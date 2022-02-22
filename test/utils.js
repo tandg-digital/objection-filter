@@ -99,13 +99,19 @@ module.exports = {
         table.integer('version').index();
         table.unique(['movieId', 'version']);
       })
-      .then(function () {
+      .then(async function () {
         if (session.config.client === 'postgres') {
+
+          // Add JSONB column to test FieldExpressions
+          await session.knex.schema.table('Movie', table => {
+            table.jsonb('metadata').notNullable().defaultsTo('{}');
+          })
+
           // Index to speed up wildcard searches.
-          return Promise.join(
+          return Promise.all([
             session.knex.raw('CREATE INDEX "movie_name_wildcard_index" ON "Movie" USING btree ("name" varchar_pattern_ops)'),
             session.knex.raw('CREATE INDEX "animal_name_wildcard_index" ON "Animal" USING btree ("name" varchar_pattern_ops)')
-          );
+          ]);
         }
       });
   },
@@ -166,13 +172,29 @@ module.exports = {
 
         movies: _.times(M, function (m) {
           const id = p * M + m + 1;
-          return {
+          const movie = {
             id: id,
             categoryId: p + 1,
             name: 'M' + zeroPad(P * M - id),
             code: p <= 4 ? null : ('C' + zeroPad(p)),
             seq: Math.floor(Math.random() * 20)
           };
+          if(session.config.client === 'postgres'){
+            const booleanField = movie.categoryId % 2 === 0;
+            movie.metadata = {
+              stringField: movie.name,
+              numberField: movie.categoryId,
+              booleanField,
+              objectField: {
+                stringField: movie.name,
+                numberField: movie.categoryId,
+                booleanField
+              },
+			  arrayField: booleanField ? [1, 2, 3] : [3, 2, 1],
+              nullField: null
+            }
+          }
+          return movie;
         }),
 
         movieVersions: _.times(M, function (m) {
