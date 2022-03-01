@@ -2,6 +2,7 @@ const _ = require('lodash');
 require('chai').should();
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
+const { expect } = require('chai');
 
 const { NUMERIC_SORT } = testUtils;
 
@@ -544,6 +545,36 @@ describe('aggregation', function () {
           counts.length.should.equal(100);
           counts.should.deep.equal(fillArray([10, 90], [10, 0]));
         });
+		it('should not cause collisions in select statement', async () => {
+			const query = buildFilter(Movie, null);
+			query._builder.debug();
+			const result = await query
+			.build({
+				eager: {
+					$aggregations: [
+						{
+							type: 'count',
+							relation: 'version',
+							field: 'version',
+							alias: 'versionCount',
+						}
+					],
+					$where: {
+						$and: {
+							name: 'M12',
+							'category.name': 'C08'
+						}
+
+					},
+					category: true,
+					version: true
+				},
+				order: 'versionCount desc'
+			});
+			const movie = result[0];
+			expect(movie.name).to.equal('M12');
+			expect(movie.category.name).to.equal('C08');
+		});
       });
     });
   });
