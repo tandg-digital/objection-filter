@@ -1,5 +1,7 @@
 const _ = require('lodash');
 require('chai').should();
+const { expect } = require('chai');
+
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
 
@@ -71,6 +73,27 @@ describe('complex filters', function () {
               }
             });
           results1.should.deep.equal(results2);
+        });
+
+        it('should not cause name collisions when only joining belongsTo relations', async () => {
+          const query = buildFilter(Movie, null);
+          const result = await query
+            .build({
+              eager: {
+                $where: {
+                  $and: {
+                    name: 'M12',
+                    'category.name': 'C08'
+                  },
+                },
+                category: true
+              }
+            });
+
+          const movie = result[0];
+
+          expect(movie.name).to.equal('M12');
+          expect(movie.category.name).to.equal('C08');
         });
       });
 

@@ -86,13 +86,14 @@ export default class FilterQueryBuilder<
   build(params: FilterQueryParams = {}): QueryBuilder<M> {
     const { fields, limit, offset, order, eager } = params;
 
-    applyFields(fields, this._builder);
     applyWhere(params.where, this._builder, this.utils);
     applyRequire(params.require, this._builder, this.utils);
 
     applyOrder(order, this._builder);
     applyEager(eager, this._builder, this.utils);
     applyLimit(limit, offset, this._builder);
+
+    applyFields(fields, this._builder);
 
     return this._builder;
   }
@@ -471,19 +472,17 @@ export function applyRequire<M extends BaseModel>(
   const isOnlyJoiningToBelongsTo: boolean = testAllRelations(
     propertiesSet,
     Model,
-    (relation: unknown) => {
-      return (
-        relation instanceof Model.BelongsToOneRelation ||
-        relation instanceof Model.HasOneRelation
-      );
-    }
+    (relation: unknown) => (
+      relation instanceof Model.BelongsToOneRelation ||
+      relation instanceof Model.HasOneRelation
+    )
   );
   if (isOnlyJoiningToBelongsTo) {
     // If there are only belongsTo or hasOne relations, then filter on the main query
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
     const joinRelation = createRelationExpression(propertiesSet);
     builder.joinRelated(joinRelation);
-    return builder;
+    return builder.select(`${builder.modelClass().tableName}.*`);
   }
 
   // If there are a hasMany or manyToMany relations, then create a separate filter query
@@ -612,6 +611,10 @@ function selectFields<M extends BaseModel>(
 ): QueryBuilder<M> {
   if (fields.length === 0) return;
   const knex = builder.modelClass().knex();
+
+  // There may be pre-existing select * statements
+  builder.clear('select');
+
   // HACK: sqlite incorrect column alias when selecting 1 column
   // TODO: investigate sqlite column aliasing on eager models
   if (fields.length === 1 && !relationName) {
