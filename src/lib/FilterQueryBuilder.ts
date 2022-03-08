@@ -481,7 +481,7 @@ export function applyRequire<M extends BaseModel>(
     // If there are only belongsTo or hasOne relations, then filter on the main query
     applyLogicalExpression(filter, builder, false, getFullyQualifiedName);
     const joinRelation = createRelationExpression(propertiesSet);
-    builder.joinRelated(joinRelation);
+    builder.leftJoinRelated(joinRelation);
     return builder.select(`${builder.modelClass().tableName}.*`);
   }
 
@@ -491,7 +491,7 @@ export function applyRequire<M extends BaseModel>(
 
   // If there were related properties, join onto the filter
   const joinRelation = createRelationExpression(propertiesSet);
-  filterQuery.joinRelated(joinRelation);
+  filterQuery.leftJoinRelated(joinRelation);
 
   const filterQueryAlias = 'filter_query';
   builder.innerJoin(filterQuery.as(filterQueryAlias), function () {
