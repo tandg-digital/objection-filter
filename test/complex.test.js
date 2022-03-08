@@ -95,6 +95,99 @@ describe('complex filters', function () {
           expect(movie.name).to.equal('M12');
           expect(movie.category.name).to.equal('C08');
         });
+
+        context('given there are $or conditions on root and related models (belongsTo)',() => {
+          let result;
+
+          before(async () => {
+            // Create a new Animal without an ownerId data (so inner join would omit this row normally)
+            await Animal.query()
+              .insert({ id: 1000, name: 'PXX' });
+
+            const query = buildFilter(Animal, null);
+            result = await query
+              .build({
+                eager: {
+                  $where: {
+                    $or: [
+                      { name: 'PXX' },
+                      { 'owner.firstName': 'F00' }
+                    ]
+                  }
+                }
+              });
+          });
+
+          after(async () => {
+            await Animal.query()
+              .delete()
+              .where({ name: 'PXX' });
+          });
+
+          it('should return 11 rows', () => {
+            result.length.should.equal(11);
+          });
+
+          it('should return the correct data', () => {
+            result.map(animal => animal.name)
+              .sort()
+              .should.deep.equal([
+                'P00',
+                'P01',
+                'P02',
+                'P03',
+                'P04',
+                'P05',
+                'P06',
+                'P07',
+                'P08',
+                'P09',
+                'PXX'
+              ])
+          });
+        });
+
+        context('given there are $or conditions on root and related models (hasMany)',() => {
+          let result;
+
+          before(async () => {
+            // Create a new Person without related data (so inner join would omit this row normally)
+            await Person.query()
+              .insert({ id: 1000, firstName: 'FXX' });
+
+            const query = buildFilter(Person, null);
+            result = await query
+              .build({
+                eager: {
+                  $where: {
+                    $or: [
+                      { firstName: 'FXX' },
+                      { 'pets.name': 'P00' }
+                    ]
+                  }
+                }
+              });
+          });
+
+          after(async () => {
+            await Person.query()
+              .delete()
+              .where({ firstName: 'FXX' });
+          });
+
+          it('should return 2 rows', () => {
+            result.length.should.equal(2);
+          });
+
+          it('should return the correct data', () => {
+            result.map(person => person.firstName)
+              .sort()
+              .should.deep.equal([
+                'F00',
+                'FXX'
+              ])
+          });
+        });
       });
 
       describe('comparative operators', function() {
@@ -399,10 +492,10 @@ describe('complex filters', function () {
             result.map(animal => animal.owner.firstName.should.equal('F00'));
           });
 
-          it('should generate SQL without filter inner join', () => {
+          it('should generate SQL without filter subquery inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
             FORMAT_SQL(sql).should.equal(
-              'select `Animal`.* from `Animal` inner join `Person` as `owner` on `owner`.`id` = `Animal`.`ownerId` where (`owner`.`firstName` = ?)'
+              'select `Animal`.* from `Animal` left join `Person` as `owner` on `owner`.`id` = `Animal`.`ownerId` where (`owner`.`firstName` = ?)'
             );
           });
         });
@@ -470,10 +563,10 @@ describe('complex filters', function () {
             result[0].firstName.should.equal('F02');
           });
 
-          it('should generate SQL without filter inner join', () => {
+          it('should generate SQL without filter subquery inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
             FORMAT_SQL(sql).should.equal(
-              'select `Person`.* from `Person` inner join `Person` as `parent` on `parent`.`id` = `Person`.`pid` where (`parent`.`firstName` = ?)'
+              'select `Person`.* from `Person` left join `Person` as `parent` on `parent`.`id` = `Person`.`pid` where (`parent`.`firstName` = ?)'
             );
           });
         });
@@ -494,10 +587,10 @@ describe('complex filters', function () {
             result.length.should.equal(100);
           });
 
-          it('should generate SQL without filter inner join', () => {
+          it('should generate SQL without filter subquery inner join', () => {
             const { sql } = query.toKnexQuery().toSQL();
             FORMAT_SQL(sql).should.equal(
-              'select `Movie`.* from `Movie` inner join `Movie_Version` as `version` on `version`.`movieId` = `Movie`.`id` where (`version`.`version` = ?)'
+              'select `Movie`.* from `Movie` left join `Movie_Version` as `version` on `version`.`movieId` = `Movie`.`id` where (`version`.`version` = ?)'
             );
           });
         });
