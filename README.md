@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/tandg-digital/objection-filter.svg?branch=master)](https://travis-ci.com/tandg-digital/objection-filter) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
+[![CircleCI](https://circleci.com/gh/tandg-digital/objection-filter/tree/master.svg?style=svg)](https://circleci.com/gh/tandg-digital/objection-filter/tree/master) [![Coverage Status](https://coveralls.io/repos/github/tandg-digital/objection-filter/badge.svg?branch=master)](https://coveralls.io/github/tandg-digital/objection-filter?branch=master)
 
 # What is objection-filter?
 objection-filter is a plugin for the [objection.js](https://github.com/Vincit/objection.js) ORM. It's designed to allow powerful filters and aggregations on your API.
