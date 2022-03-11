@@ -1,5 +1,11 @@
 # Changelog
 
+### 4.3.0
+
+- Add jsonb attribute filtering [PR #37](https://github.com/tandg-digital/objection-filter/pull/37)
+- Fix #51
+- Fix #47
+- Change ci platform from travisci to circleci
 ### 4.2.0
 
 - Optimized the sql query so that belongsTo and hasOne relations both perform similarly when filtering
