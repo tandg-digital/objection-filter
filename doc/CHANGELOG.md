@@ -1,5 +1,9 @@
 # Changelog
 
+### 4.3.1
+
+- Set transaction parameter to optional [PR #54](https://github.com/tandg-digital/objection-filter/pull/54)
+
 ### 4.3.0
 
 - Add jsonb attribute filtering [PR #37](https://github.com/tandg-digital/objection-filter/pull/37)
