@@ -7,8 +7,8 @@ import { getPropertiesFromExpression as _getPropertiesFromExpression } from './l
 
 export function buildFilter<M extends BaseModel, K extends typeof Model>(
   modelClass: K,
-  trx: Transaction,
-  options: FilterQueryBuilderOptions<M>
+  trx?: Transaction,
+  options?: FilterQueryBuilderOptions<M>
 ): _FilterQueryBuilder<M, K> {
   return new FilterQueryBuilder(modelClass, trx, options);
 }

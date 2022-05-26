@@ -71,7 +71,7 @@ export default class FilterQueryBuilder<
    */
   constructor(
     Model: K,
-    trx: Transaction,
+    trx?: Transaction,
     options: FilterQueryBuilderOptions<M> = {}
   ) {
     this.Model = Model;
