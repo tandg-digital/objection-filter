@@ -23,8 +23,11 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Model as ObjModel,
   OrderByDirection,
-  Relation
+  Relation,
+  raw,
+  RawBuilder
 } from 'objection';
+
 import * as _ from 'lodash';
 import { debug } from '../config';
 import {
@@ -50,9 +53,6 @@ import {
   EagerExpression,
   ExpressionObject
 } from './types';
-
-// eslint-disable-next-line import/order
-import Knex = require('knex');
 
 export default class FilterQueryBuilder<
   M extends BaseModel,
@@ -113,7 +113,7 @@ export default class FilterQueryBuilder<
    * @param {String} exp The objection.js eager expression
    */
   allowEager(eagerExpression: string): this {
-    this._builder.allowEager(eagerExpression);
+    this._builder.allowGraph(eagerExpression);
 
     return this;
   }
@@ -142,12 +142,11 @@ const getOuterModel = function <M extends BaseModel>(
  * @param {String} alias
  */
 const nullToZero = function (
-  knex: Knex,
   tableAlias: string,
   columnAlias = 'count'
-): Knex.Raw {
+): RawBuilder {
   const column = `${tableAlias}.${columnAlias}`;
-  return knex.raw(
+  return raw(
     'case when ?? is null then 0 else cast(?? as decimal) end as ??',
     [column, column, columnAlias]
   );
@@ -266,7 +265,6 @@ const applyAggregations = function <M extends BaseModel>(
   if (aggregations.length === 0) return;
 
   const Model = builder.modelClass();
-  const knex = Model.knex();
   const aggAlias = (i) => `agg_${i}`;
   const idColumns = _.isArray(Model.idColumn)
     ? Model.idColumn
@@ -283,7 +281,6 @@ const applyAggregations = function <M extends BaseModel>(
   // For each aggregation query, select the aggregation then join onto the full query
   aggregationQueries.forEach((query, i) => {
     const nullToZeroStatement = nullToZero(
-      knex,
       aggAlias(i),
       aggregations[i].alias
     );
