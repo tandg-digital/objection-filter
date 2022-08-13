@@ -76,6 +76,21 @@ describe('basic filters', function () {
           _.keys(result[0]).should.deep.equal(['id', 'firstName']);
         });
 
+        it('should select limited fields on both root and related models', async () => {
+          const result = await buildFilter(Person)
+            .build({
+              limit: 1,
+              fields: ['id', 'firstName', 'movies.id'],
+              eager: {
+                movies: true
+              }
+            });
+          result.should.be.an.an('array');
+          result.should.have.length(1);
+          _.keys(result[0]).should.deep.equal(['id', 'firstName', 'movies']);
+          _.map(result[0].movies, movie => _.keys(movie).should.deep.equal(['id']));
+        });
+
         it('should order by descending', async () => {
           const result = await buildFilter(Person)
             .build({
