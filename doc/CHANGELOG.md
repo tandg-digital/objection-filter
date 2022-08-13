@@ -1,5 +1,8 @@
 # Changelog
 
+### 4.3.2
+
+- Fix #57 - Fix `select` root model fields not being respected when related fields are specified
 ### 4.3.1
 
 - Set transaction parameter to optional [PR #54](https://github.com/tandg-digital/objection-filter/pull/54)
