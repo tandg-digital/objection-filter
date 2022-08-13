@@ -609,9 +609,6 @@ function selectFields<M extends BaseModel>(
   if (fields.length === 0) return;
   const knex = builder.modelClass().knex();
 
-  // There may be pre-existing select * statements
-  builder.clear('select');
-
   // HACK: sqlite incorrect column alias when selecting 1 column
   // TODO: investigate sqlite column aliasing on eager models
   if (fields.length === 1 && !relationName) {
