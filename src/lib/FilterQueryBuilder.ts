@@ -68,14 +68,16 @@ export default class FilterQueryBuilder<
    * @param {Model} Model
    * @param {Transaction} trx
    * @param {Object} options.operators Custom operator handlers
+   * @param {QueryBuilder} builder Custom builder
    */
   constructor(
     Model: K,
     trx?: Transaction,
-    options: FilterQueryBuilderOptions<M> = {}
+    options: FilterQueryBuilderOptions<M> = {},
+    builder?: QueryBuilder<M>,
   ) {
     this.Model = Model;
-    this._builder = Model.query(trx) as QueryBuilder<M>;
+    this._builder = builder || Model.query(trx) as QueryBuilder<M>;
 
     const { operators = {}, onAggBuild } = options;
 
