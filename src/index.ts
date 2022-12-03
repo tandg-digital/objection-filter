@@ -1,4 +1,4 @@
-import { Transaction, Model } from 'objection';
+import { Transaction, Model, QueryBuilder } from 'objection';
 import _FilterQueryBuilder from './lib/FilterQueryBuilder';
 import { sliceRelation as _sliceRelation } from './lib/utils';
 import { createRelationExpression as _createRelationExpression } from './lib/ExpressionBuilder';
@@ -8,9 +8,10 @@ import { getPropertiesFromExpression as _getPropertiesFromExpression } from './l
 export function buildFilter<M extends BaseModel, K extends typeof Model>(
   modelClass: K,
   trx?: Transaction,
-  options?: FilterQueryBuilderOptions<M>
+  options?: FilterQueryBuilderOptions<M>,
+  builder?: QueryBuilder<M>,
 ): _FilterQueryBuilder<M, K> {
-  return new FilterQueryBuilder(modelClass, trx, options);
+  return new FilterQueryBuilder(modelClass, trx, options, builder);
 }
 export const FilterQueryBuilder = _FilterQueryBuilder;
 export const sliceRelation = _sliceRelation;

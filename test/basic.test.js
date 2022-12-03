@@ -1,5 +1,6 @@
 const _ = require('lodash');
 require('chai').should();
+const { raw, ref } = require('objection');
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
 
@@ -141,6 +142,17 @@ describe('basic filters', function () {
             });
           result.map(item => item.id).should.deep.equal(
             _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
+          );
+        });
+
+        it('should order by property added in model modifier', async () => {
+          const builder = Person.query().modify("withBirthYear");
+          const result = await buildFilter(Person, null, {}, builder)
+            .build({
+              order: 'birthYear, id'
+            });
+          result.map(item => item.id).should.deep.equal(
+            _.sortBy(result, ['birthYear', 'id']).map(({ id }) => id)
           );
         });
       });

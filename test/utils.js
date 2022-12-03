@@ -5,6 +5,7 @@ const Knex = require('knex');
 const Promise = require('bluebird');
 const objection = require('objection');
 const pg = require('pg');
+const { raw } = require('objection');
 
 pg.types.setTypeParser(1700, 'text', parseFloat); // DECIMAL
 pg.types.setTypeParser(20, 'text', parseInt); // BIGINT
@@ -255,6 +256,19 @@ function createModels(knex) {
   class Person extends objection.Model {
     static get tableName() {
       return 'Person';
+    }
+
+    static get modifiers() {
+      return {
+        withBirthYear(builder) {
+          const currentYear = new Date().getFullYear();
+          const personWithBirthYearQuery = Person.query().withGraphFetched("movies").select([
+            "Person.id", 
+            raw(`${currentYear} - age`).as("birthYear"),
+          ]);
+          builder.from(raw("(??)", personWithBirthYearQuery).as("Person"));
+        },
+      };
     }
 
     static get relationMappings() {
