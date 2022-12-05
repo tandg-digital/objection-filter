@@ -147,7 +147,7 @@ describe('basic filters', function () {
 
         it('should order by property added in model modifier', async () => {
           const builder = Person.query().modify("withBirthYear");
-          const result = await buildFilter(Person, null, {}, builder)
+          const result = await buildFilter(Person, null, { builder })
             .build({
               order: 'birthYear, id'
             });

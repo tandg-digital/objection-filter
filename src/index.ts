@@ -9,9 +9,8 @@ export function buildFilter<M extends BaseModel, K extends typeof Model>(
   modelClass: K,
   trx?: Transaction,
   options?: FilterQueryBuilderOptions<M>,
-  builder?: QueryBuilder<M>,
 ): _FilterQueryBuilder<M, K> {
-  return new FilterQueryBuilder(modelClass, trx, options, builder);
+  return new FilterQueryBuilder(modelClass, trx, options);
 }
 export const FilterQueryBuilder = _FilterQueryBuilder;
 export const sliceRelation = _sliceRelation;
