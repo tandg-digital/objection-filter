@@ -72,7 +72,7 @@ export default class FilterQueryBuilder<
   constructor(
     Model: K,
     trx?: Transaction,
-    options: FilterQueryBuilderOptions<M> = {},
+    options: FilterQueryBuilderOptions<M> = {}
   ) {
     const { operators = {}, onAggBuild, builder } = options;
 
