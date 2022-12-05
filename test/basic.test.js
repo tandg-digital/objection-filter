@@ -1,6 +1,5 @@
 const _ = require('lodash');
 require('chai').should();
-const { raw, ref } = require('objection');
 const testUtils = require('./utils');
 const { buildFilter } = require('../dist');
 
