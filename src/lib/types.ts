@@ -73,6 +73,7 @@ export interface LogicalExpressionIteratorOptions<M extends Model> {
 export interface FilterQueryBuilderOptions<M extends Model> {
   operators?: Operators<M>;
   onAggBuild?: AggregationCallback;
+  builder?: QueryBuilder<M>;
 }
 
 export interface FilterQueryParams {

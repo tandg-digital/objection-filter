@@ -143,6 +143,17 @@ describe('basic filters', function () {
             _.sortBy(result, ['seq', 'id']).map(({ id }) => id)
           );
         });
+
+        it('should order by property added in model modifier', async () => {
+          const builder = Person.query().modify("withBirthYear");
+          const result = await buildFilter(Person, null, { builder })
+            .build({
+              order: 'birthYear, id'
+            });
+          result.map(item => item.id).should.deep.equal(
+            _.sortBy(result, ['birthYear', 'id']).map(({ id }) => id)
+          );
+        });
       });
 
       describe('eager loaded data', function() {

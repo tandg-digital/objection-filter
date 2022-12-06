@@ -74,10 +74,10 @@ export default class FilterQueryBuilder<
     trx?: Transaction,
     options: FilterQueryBuilderOptions<M> = {}
   ) {
-    this.Model = Model;
-    this._builder = Model.query(trx) as QueryBuilder<M>;
+    const { operators = {}, onAggBuild, builder } = options;
 
-    const { operators = {}, onAggBuild } = options;
+    this.Model = Model;
+    this._builder = builder || Model.query(trx) as QueryBuilder<M>;
 
     // Initialize instance specific utilities
     this.utils = Operations({ operators, onAggBuild });
