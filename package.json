@@ -77,6 +77,6 @@
     "lodash": "^4.17.5"
   },
   "peerDependencies": {
-    "objection": "^2.1.2"
+    "objection": "^2.1.2 || ^3.0.0"
   }
 }
