@@ -147,7 +147,7 @@ const nullToZero = function (
 ): RawBuilder {
   const column = `${tableAlias}.${columnAlias}`;
   return raw(
-    'case when ?? is null then 0 else cast(?? as decimal) end as ??',
+    'CASE WHEN ?? IS NULL THEN 0 ELSE COALESCE(??, 0) END AS ??',
     [column, column, columnAlias]
   );
 };
