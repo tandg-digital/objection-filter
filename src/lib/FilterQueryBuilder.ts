@@ -484,6 +484,10 @@ export function applyRequire<M extends BaseModel>(
 
   // If there are a hasMany or manyToMany relations, then create a separate filter query
   const filterQuery = Model.query().distinct(...fullIdColumns);
+  
+  	// Uncomment to fix: 
+    // filterQuery.context(builder.context());
+
   applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
 
   // If there were related properties, join onto the filter
