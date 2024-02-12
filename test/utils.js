@@ -194,7 +194,7 @@ module.exports = {
                 numberField: movie.categoryId,
                 booleanField
               },
-        arrayField: booleanField ? [1, 2, 3] : [3, 2, 1],
+              arrayField: booleanField ? [1, 2, 3] : [3, 2, 1],
               nullField: null
             }
           }
