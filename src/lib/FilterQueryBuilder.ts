@@ -218,8 +218,7 @@ const buildAggregation = function <M extends BaseModel>(
       ])
     )
     .leftJoinRelated(relation)
-	.context(builder.context());
-
+    .context(builder.context());
 
   // Apply filters to models on the aggregation path
   if (onAggBuild) {
@@ -279,9 +278,8 @@ const applyAggregations = function <M extends BaseModel>(
 
   // Create a replicated subquery equivalent to the base model + aggregations
   const fullQuery = Model.query()
-  	.select(Model.tableName + '.*')
-	.context(builder.context());
-
+    .select(Model.tableName + '.*')
+    .context(builder.context());
 
   // For each aggregation query, select the aggregation then join onto the full query
   aggregationQueries.forEach((query, i) => {
@@ -489,7 +487,7 @@ export function applyRequire<M extends BaseModel>(
 
   // If there are a hasMany or manyToMany relations, then create a separate filter query
   const filterQuery = Model.query()
-  	.distinct(...fullIdColumns)
+    .distinct(...fullIdColumns)
     .context(builder.context());
 
   applyLogicalExpression(filter, filterQuery, false, getFullyQualifiedName);
