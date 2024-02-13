@@ -96,6 +96,29 @@ describe('complex filters', function () {
           expect(movie.category.name).to.equal('C08');
         });
 
+        it('should pass the builder context to relation modifiers', async () => {
+          // Make a builder with a context to be used in the relation
+          const builder = Person.query();
+          builder.context({ useFirstMovie: () => true })
+
+          const query = buildFilter(Person, null, { builder });
+          const result = await query
+            .build({
+              eager: {
+                $where: {
+                  'movies.categoryId': 1
+                },
+                movies: true,
+              }
+            });
+            
+          expect(result.length).to.equal(1);
+          const person = result[0];
+          expect(person.movies.length).to.equal(1);
+          const movie = person.movies[0];
+          expect(movie.name).to.equal('M90');
+        });
+
         context('given there are $or conditions on root and related models (belongsTo)',() => {
           let result;
 

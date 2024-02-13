@@ -194,7 +194,7 @@ module.exports = {
                 numberField: movie.categoryId,
                 booleanField
               },
-			  arrayField: booleanField ? [1, 2, 3] : [3, 2, 1],
+              arrayField: booleanField ? [1, 2, 3] : [3, 2, 1],
               nullField: null
             }
           }
@@ -301,6 +301,12 @@ function createModels(knex) {
               to: 'Person_Movie.movieId'
             },
             to: 'Movie.id'
+          },
+          modify(qb){
+            const { useFirstMovie } = qb.context();
+            if(useFirstMovie && useFirstMovie()){
+              qb.whereRaw('name LIKE ?', 'M_0');
+            }
           }
         }
       };
