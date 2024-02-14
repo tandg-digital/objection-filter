@@ -565,10 +565,13 @@ export function applyOrder<M extends BaseModel>(
   if (!order) return;
   const Model = builder.modelClass();
 
+  const joinedRelations = new Set<string>();
+
   order.split(',').forEach((orderStatement) => {
-    const [orderProperty, direction = 'asc'] = orderStatement
+    const [orderProperty, direction = 'asc', eager = 'true'] = orderStatement
       .trim()
-      .split(' ') as [string, OrderByDirection];
+      .split(' ') as [string, OrderByDirection, string];
+	console.log(orderStatement, orderProperty, direction, eager)
     const { propertyName, relationName } = sliceRelation(orderProperty);
 
     // Use fieldExpressionRef to sort if necessary
@@ -584,19 +587,44 @@ export function applyOrder<M extends BaseModel>(
       }
     };
 
+	console.log(relationName);
     if (!relationName) {
       // Root level where should include the root table name
       const fullyQualifiedColumn = `${Model.tableName}.${propertyName}`;
       return orderBy(builder, fullyQualifiedColumn);
     }
 
-    // For now, only allow sub-query ordering of eager expressions
-    builder.modifyGraph(relationName, (eagerBuilder) => {
-      const fullyQualifiedColumn = `${
-        eagerBuilder.modelClass().tableName
-      }.${propertyName}`;
-      orderBy(eagerBuilder, fullyQualifiedColumn);
-    });
+	if(eager !== 'false'){
+		// For now, only allow sub-query ordering of eager expressions
+		return builder.modifyGraph(relationName, (eagerBuilder) => {
+			const fullyQualifiedColumn = `${
+			eagerBuilder.modelClass().tableName
+			}.${propertyName}`;
+			orderBy(eagerBuilder, fullyQualifiedColumn);
+		});
+	}
+
+	const isOnlyJoiningToBelongsTo: boolean = testAllRelations(
+		[orderProperty],
+		Model,
+		(relation: unknown) => (
+		  relation instanceof Model.BelongsToOneRelation ||
+		  relation instanceof Model.HasOneRelation
+		)
+	);
+
+	if(!isOnlyJoiningToBelongsTo){
+		throw new Error('Ordering by non-eager relations is not supported for array types')
+	}
+	console.log('not eager')
+
+	const relationAlias = `${relationName.replace(/\./g, '_')}_order`;
+	const relationColumn = `${relationAlias}.${propertyName}`;
+	if(!joinedRelations.has(relationAlias)){
+		joinedRelations.add(relationAlias);
+		builder.leftJoinRelated(relationName, { alias: relationAlias });
+	}
+	orderBy(builder, relationColumn);
   });
 
   return builder;

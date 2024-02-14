@@ -275,6 +275,29 @@ describe('basic filters', function () {
               );
           });
         });
+
+
+		it('should order non-eager loaded model descending', async () => {
+			const result = await buildFilter(Person)
+			  .build({
+				eager: {
+					parent: true,
+					$where: {
+						pid:{
+							$exists: true
+						}
+
+					}
+				},
+				order: 'parent.firstName desc false',
+			  })
+			  
+			result.should.be.an.an('array');
+			const parents = result.map(r => r.parent.firstName);
+			const expected = ['F08', 'F07', 'F06', 'F05', 'F04', 'F03', 'F02', 'F01', 'F00'];
+			
+			parents.should.deep.equal(expected);
+		  });
       });
 
       describe('controls and errors', function() {
